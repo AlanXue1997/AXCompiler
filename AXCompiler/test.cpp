@@ -1,61 +1,17 @@
 #include "test.h"
 
-char* st[] = {
-	"SEMI",
-	"COMMA",
-	"ASSIGNOP",
-	"GT",
-	"LT",
-	"GE",
-	"LE",
-	"EQ",
-	"NE",
-	"PLUS",
-	"MINUS",
-	"STAR",
-	"DIV",
-	"AND",
-	"OR",
-	"[DEC]",
-	"NOT",
-	"INT",
-	"DOUBLE",
-	"LP",
-	"RP",
-	"LB",
-	"RB",
-	"LC",
-	"RC",
-	"STRUCT",
-	"RETURN",
-	"IF",
-	"ELSE",
-	"WHILE",
-	"[ID]",
-	"DO",
-	"[DOUBLE]",
-	"[INT]",
-	"[OCT]",
-	"[STRING]",
-	"[CHAR]",
-	"CHAR",
-	"DOT",
-	"END"
-};
+int2name w;
 
-void output(TOKEN * words) {
-	if (words == NULL) return;
-	//output(words->p);
-	//printf("%d ", words->code);
-	printf("%s ", st[words->code]);
+void init_test() {
+	w = getInt2name();
 }
 
 void outputWord(TOKEN * words) {
 	std::string *s = (std::string*)words->p;
 	if (s != NULL) {
-		printf("(%s\t, \"%s\")", st[words->code], s->c_str());
+		printf("(%s\t, \"%s\")", w[words->code].c_str(), s->c_str());
 	}
 	else {
-		printf("(%s\t, \"[NULL]\")", st[words->code]);
+		printf("(%s\t, \"[NULL]\")", w[words->code].c_str());
 	}
 }

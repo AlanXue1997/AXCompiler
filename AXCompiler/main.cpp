@@ -1,12 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "scanner.h"
-#include "parser.h"
+//#include "parser.h"
 #include "test.h"
 #include "tokens.h"
 
 void init() {
-	init_parse();
+	//init_parse();
+	initScanner();
+	init_test();
 }
 
 int main(int argc, char* argv[]) {
@@ -18,20 +20,20 @@ int main(int argc, char* argv[]) {
 	//-----------------------------------------------
 	//Test scanner
 	//-----------------------------------------------
-	/*
 	int k;
-	TOKEN * words = wordScan(file);
-	while (words != NULL) {
-		outputWord(words);
+	TOKEN * words;// = tokenScan(file);
+	do {
 		//printf("%d ", words->code);
-		words = wordScan(file);
-	}
-	*/
+		words = tokenScan(file);
+		outputWord(words);
+		printf("\n");
+	}while (words->code != END);
 	//-----------------------------------------------
 
 	//-----------------------------------------------
 	//Test parse
 	//-----------------------------------------------
+	/*
 	TOKEN * words;
 	int k;
 	do {
@@ -40,9 +42,10 @@ int main(int argc, char* argv[]) {
 		k = parse(words->code);
 		printf("\n");
 	} while (words->code!=END && k!=NONE);
-	//-----------------------------------------------
 	if (words->code == END)printf("ACCEPTED!!!\n");
 	else printf("ERROR");
+	*/
+	//-----------------------------------------------
 	system("pause");
 	return 0;
 }

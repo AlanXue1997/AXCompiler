@@ -1,13 +1,16 @@
 #pragma once
 
 #include <stdio.h>
+#include <fstream>
 #include <stdlib.h>
 #include <string.h>
 #include <string>
 #include <unordered_map>
+#include <map>
 
 #include "tokens.h"
 
+#define DIC_NAME "dictionary.txt"
 #define CACHE_SIZE 128
 
 #define S_WRONG -1
@@ -22,9 +25,16 @@
 #define S_CHAR 8
 #define S_COMMENT 9
 
+typedef std::map<std::string, int> word2int;
+typedef std::map<int, std::string> int2name;
+
+word2int getWord2int();
+int2name getInt2name();
+
 struct TOKEN {
 	int code;
 	void * p;
 };
 
 TOKEN * tokenScan(FILE * file);
+int initScanner();

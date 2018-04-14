@@ -22,17 +22,11 @@ void new_pro(int len, ...) {
 
 void init_parse() {
 	s.push(item{ 0, END });//bottom of stack, END denotes '#'
-	/*
-	new_pro(1, V_S0, V_S);
-	new_pro(3, V_S, V_L, 2, V_R);
-	new_pro(1, V_S, V_R);
-	new_pro(2, V_L, 0, V_R);
-	new_pro(1, V_L, 1);
-	new_pro(1, V_R, V_L);
-	*///FIRST 1
+	//FIRST 1
 	new_pro(1, V_S0, V_S);
 
 	//TOKENS 8
+	/*
 	new_pro(1, V_RELOP, GT);
 	new_pro(1, V_RELOP, LT);
 	new_pro(1, V_RELOP, GE);
@@ -127,7 +121,7 @@ void init_parse() {
 
 	new_pro(3, V_ARGS, V_EXP, COMMA, V_ARGS);
 	new_pro(1, V_ARGS, V_EXP);
-	
+	*/
 
 	std::ifstream f("table.dat", std::ios::binary);
 	for (int i = 0; i < N_STATE; ++i) {

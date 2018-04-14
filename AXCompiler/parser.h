@@ -10,7 +10,7 @@
 #define N_PRODUCTION 67
 #define N_STATE 313
 
-#define TERMINATION N_TOKEN
+#define TERMINATION N_TYPE+1
 
 #define ACC -1
 #define NONE -2
