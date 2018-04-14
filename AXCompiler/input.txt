@@ -1,0 +1,11 @@
+int main(){
+	int n = 5;
+	int sum = 0;
+	double a, b, c;
+	while(n > 0){
+		sum = sum + a;
+		n = n - 1;
+	}
+	if(b*b-4*a*c > 0);
+	return 0;
+}

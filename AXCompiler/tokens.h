@@ -1,0 +1,44 @@
+#pragma once
+
+#define SEMI    0
+#define COMMA   1
+#define ASSIGNOP    2
+#define GT  3
+#define LT  4
+#define GE  5
+#define LE  6
+#define EQ  7
+#define NE  8
+#define PLUS    9
+#define MINUS   10
+#define STAR    11
+#define DIV 12
+#define AND 13
+#define OR  14
+#define CONST_DEC 15
+#define NOT 16
+#define INT 17
+#define DOUBLE   18
+#define LP  19
+#define RP  20
+#define LB  21
+#define RB  22
+#define LC  23
+#define RC  24
+#define STRUCT  25
+#define RETURN  26
+#define IF  27
+#define ELSE    28
+#define WHILE   29
+#define ID  30
+#define DO  31
+#define CONST_DOUBLE 32
+#define CONST_INT 33
+#define CONST_OCT 34
+#define CONST_STRING 35
+#define CONST_CHAR 36
+#define CHAR 37
+#define DOT 38
+
+#define END 39
+#define N_TOKEN 40
