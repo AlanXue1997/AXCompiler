@@ -21,7 +21,7 @@ void new_pro(int len, ...) {
 }
 
 void add_var(name2int &n2i, int2name &i2n) {
-	std::ifstream fin("production.txt");
+	std::ifstream fin("productions.txt");
 	int n = i2n.size() + N_TYPE + 1;
 	int start = n+1;
 	n2i["S0"] = n; i2n[n] = "S0"; n++;
@@ -40,23 +40,32 @@ void add_var(name2int &n2i, int2name &i2n) {
 #ifdef LOG
 		if (st != ":")std::cout << "Wrong! no ':'" << std::endl;
 #endif
-		len = 0;
-		fin >> st;
-		while (st != "|" && st != ";") {
-			if (n2i.find(st) == n2i.end()) {
-				n2i[st] = n; i2n[n] = st; n++;
+		do {
+			len = 0;
+			fin >> st;
+			while (st != "|" && st != ";") {
+				if (n2i.find(st) == n2i.end()) {
+					n2i[st] = n; i2n[n] = st; n++;
+					//std::cout << st << std::endl;
+				}
+				R[len++] = n2i[st];
+				fin >> st;
 			}
-			R[len++] = n2i[st];
-		}
-		pros[flag].L = L;
-		pros[flag].len = len;
-		pros[flag].R = new int[len];
-		for (int i = 0; i < len; ++i) pros[flag].R[i] = R[i];
+			pros[flag].L = L;
+			pros[flag].len = len;
+			pros[flag].R = new int[len];
+			for (int i = 0; i < len; ++i) pros[flag].R[i] = R[i];
+			flag++;
+			std::cout << flag << std::endl;
+		} while (st != ";");
 	}
 }
 
 void init_parse() {
 	s.push(item{ 0, END });//bottom of stack, END denotes '#'
+	name2int n2i = getName2int();
+	int2name i2n = getInt2name();
+	add_var(n2i, i2n);
 
 	/*
 	std::ifstream f("table.dat", std::ios::binary);

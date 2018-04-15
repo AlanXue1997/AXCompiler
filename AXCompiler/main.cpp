@@ -1,12 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "scanner.h"
-//#include "parser.h"
+#include "parser.h"
 #include "test.h"
 #include "tokens.h"
 
 void init() {
-	//init_parse();
+	init_parse();
 	initScanner();
 	init_test();
 }
@@ -20,6 +20,7 @@ int main(int argc, char* argv[]) {
 	//-----------------------------------------------
 	//Test scanner
 	//-----------------------------------------------
+	/*
 	int k;
 	TOKEN * words;// = tokenScan(file);
 	do {
@@ -28,6 +29,7 @@ int main(int argc, char* argv[]) {
 		outputWord(words);
 		printf("\n");
 	}while (words->code != END);
+	*/
 	//-----------------------------------------------
 
 	//-----------------------------------------------
