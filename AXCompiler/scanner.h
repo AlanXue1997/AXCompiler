@@ -27,9 +27,11 @@
 
 typedef std::map<std::string, int> word2int;
 typedef std::map<int, std::string> int2name;
+typedef std::map<std::string, int> name2int;
 
 word2int getWord2int();
 int2name getInt2name();
+name2int getName2int();
 
 struct TOKEN {
 	int code;

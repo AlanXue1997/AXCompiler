@@ -20,6 +20,10 @@ void new_pro(int len, ...) {
 	num++;
 }
 
+name2int get_pros() {
+	
+}
+
 void init_parse() {
 	s.push(item{ 0, END });//bottom of stack, END denotes '#'
 	//FIRST 1

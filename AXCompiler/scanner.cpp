@@ -32,6 +32,23 @@ int2name getInt2name() {
 	return w;
 }
 
+name2int getName2int() {
+	std::ifstream fin(DIC_NAME);
+	name2int w;
+	std::string str1, str2;
+	w[IDENTIFIER] = "IDENTIFIER";
+	w[CONST_DOUBLE] = "CONST_DOUBLE";
+	w[CONST_INT] = "CONST_INT";
+	w[CONST_STRING] = "CONST_STRING";
+	w[CONST_CHAR] = "CONST_CHAR";
+	w[END] = "END";
+	int n = N_TYPE + 1;
+	while (fin >> str1 >> str2) {
+		w[n++] = str1;
+	}
+	return w;
+}
+
 int initScanner() {
 	w = getWord2int();
 	return 0;
