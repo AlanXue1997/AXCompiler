@@ -1,7 +1,9 @@
 #pragma once
 
+#include "../AXCompiler/scanner.h"
 #include "../AXCompiler/tokens.h"
 #include "../AXCompiler/parser.h"
+
 
 #include <set>
 #include <vector>

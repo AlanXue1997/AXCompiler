@@ -21,6 +21,12 @@
     <ClCompile Include="pre_parser.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="..\AXCompiler\scanner.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\AXCompiler\parser.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pre_parser.h">

@@ -21,8 +21,8 @@ int2name getInt2name() {
 	std::string str1, str2;
 	w[IDENTIFIER] = "IDENTIFIER";
 	w[CONST_DOUBLE] = "CONST_DOUBLE";
-	w[CONST_INT] = "CONST_INT";
-	w[CONST_STRING] = "CONST_STRING";
+	w[CONSTANT] = "CONSTANT";
+	w[STRING_LITERAL] = "STRING_LITERAL";
 	w[CONST_CHAR] = "CONST_CHAR";
 	w[END] = "END";
 	int n = N_TYPE + 1;
@@ -38,8 +38,8 @@ name2int getName2int() {
 	std::string str1, str2;
 	w["IDENTIFIER"] = IDENTIFIER;
 	w["CONST_DOUBLE"] = CONST_DOUBLE;
-	w["CONST_INT"] = CONST_INT;
-	w["CONST_STRING"] = CONST_STRING;
+	w["CONSTANT"] = CONSTANT;
+	w["STRING_LITERAL"] = STRING_LITERAL;
 	w["CONST_CHAR"] = CONST_CHAR;
 	w["END"] = END;
 	int n = N_TYPE + 1;
@@ -91,7 +91,7 @@ TOKEN * tokenScan(FILE * file) {
 			else*/ 
 			if (ch < '0' || ch > '9') {
 				str[flag] = 0;
-				words = new TOKEN{ CONST_INT,words };
+				words = new TOKEN{ CONSTANT,words };
 				flush = 1;
 			}
 		}
@@ -115,7 +115,7 @@ TOKEN * tokenScan(FILE * file) {
 		}
 		else if (state == S_STRING) {
 			if (ch == '"' && str[flag-1] != '\\') {
-				words = new TOKEN{ CONST_STRING,words };
+				words = new TOKEN{ STRING_LITERAL,words };
 				flush = 1;
 				ch = 10;
 			}

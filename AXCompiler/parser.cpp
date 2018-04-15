@@ -20,15 +20,18 @@ void new_pro(int len, ...) {
 	num++;
 }
 
-void add_var(name2int &n2i, int2name &i2n) {
+void add_var(name2int &n2i, int2name &i2n, production *pros) {
 	std::ifstream fin("productions.txt");
 	int n = i2n.size() + N_TYPE + 1;
-	int start = n+1;
+	pros[0].L = n;
+	pros[0].len = 1;
+	pros[0].R = new int[1];
+	pros[0].R[1] = n + 1;
 	n2i["S0"] = n; i2n[n] = "S0"; n++;
 	std::string st;
 	fin >> st;
 	n2i[st] = n; i2n[n] = st; n++;
-	int flag = 0;
+	int flag = 1;
 	while (fin >> st) {
 		if (n2i.find(st) == n2i.end()) {
 			n2i[st] = n; i2n[n] = st; n++;
@@ -56,18 +59,19 @@ void add_var(name2int &n2i, int2name &i2n) {
 			pros[flag].R = new int[len];
 			for (int i = 0; i < len; ++i) pros[flag].R[i] = R[i];
 			flag++;
-			std::cout << flag << std::endl;
+			//std::cout << flag << std::endl;
 		} while (st != ";");
 	}
 }
 
 void init_parse() {
 	s.push(item{ 0, END });//bottom of stack, END denotes '#'
+	word2int w2i = getWord2int();
 	name2int n2i = getName2int();
 	int2name i2n = getInt2name();
-	add_var(n2i, i2n);
+	add_var(n2i, i2n, pros);
 
-	/*
+	
 	std::ifstream f("table.dat", std::ios::binary);
 	for (int i = 0; i < N_STATE; ++i) {
 		for (int j = 0; j < N_TOTAL; ++j) {
@@ -75,7 +79,6 @@ void init_parse() {
 		}
 	}
 	f.close();
-	*/
 }
 
 int parse(int t) {

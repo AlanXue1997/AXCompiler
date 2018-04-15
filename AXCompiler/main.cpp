@@ -35,7 +35,7 @@ int main(int argc, char* argv[]) {
 	//-----------------------------------------------
 	//Test parse
 	//-----------------------------------------------
-	/*
+	
 	TOKEN * words;
 	int k;
 	do {
@@ -46,7 +46,7 @@ int main(int argc, char* argv[]) {
 	} while (words->code!=END && k!=NONE);
 	if (words->code == END)printf("ACCEPTED!!!\n");
 	else printf("ERROR");
-	*/
+	
 	//-----------------------------------------------
 	system("pause");
 	return 0;
