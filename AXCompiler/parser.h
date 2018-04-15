@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #include <fstream>
 
+#include "scanner.h"
 #include "tokens.h"
 
 #define N_PRODUCTION 67
