@@ -148,7 +148,7 @@ TOKEN * tokenScan(FILE * file) {
 					do {
 						while (fscanf(file, "%c", &ch) == 1 && ch != '*');
 					} while (fscanf(file, "%c", &ch) == 1 && ch != '/');
-					flush = 1;
+					flush = 1; ch = '\n';
 				}
 			}
 		}
