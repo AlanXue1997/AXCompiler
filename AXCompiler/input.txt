@@ -1,4 +1,6 @@
 int main(){
 	char ch[100] = "12345";
+	/*123
+	*/
 	return 0;
 }
