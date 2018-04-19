@@ -1,5 +1,6 @@
 #pragma once
 
+#define SCAN_WRONG -1
 #define IDENTIFIER 0
 #define CONST_DOUBLE 1
 #define CONSTANT 2

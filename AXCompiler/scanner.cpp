@@ -74,9 +74,10 @@ TOKEN * tokenScan(FILE * file) {
 		if (state == S_EMPTY) {
 			if (ch >= '0' && ch <= '9') { state = S_INT; }
 			else if ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch == '_') { state = S_TOKEN; }
-			else if (ch == '.' || ch == '(' || ch == ')' ||
+			else if (ch == '?' || ch == '(' || ch == ')' ||
 				ch == '[' || ch == ']' || ch == '{' ||
-				ch == '}' || ch == ';' || ch == ','
+				ch == '}' || ch == ';' || ch == ',' || 
+				ch == ':' || ch == '~'
 				) { words = new TOKEN{ w[str],NULL }; flush = 1; ch = 10; }
 			else if (ch == ' ' || ch == 10 || ch == '\t') { flush = 1; }
 			else if (ch == '"') { state = S_STRING; }
@@ -128,28 +129,76 @@ TOKEN * tokenScan(FILE * file) {
 			}
 		}
 		else if (state == S_OP) {
-			if (ch != '=' && ch != '&' && ch != '|' && ch != '/'&&ch!='*') {
-				str[flag] = 0;
-				str[flag] = 0;
-				if (w.find(str) != w.end()) {
-					words = new TOKEN{ w[str],words }; flush = 1;
+			switch (str[0]) {
+			case '|':
+				if (ch == '|' || ch == '=') { ch = 10;  words = new TOKEN{ w[str],words }; flush = 1; }
+				else { words = new TOKEN{ str[0],words }; flush = 1; }
+				break;
+			case '>':
+				if (ch == '=') { ch = 10;  words = new TOKEN{ w[str],words }; flush = 1; }
+				else if (ch == '>') {
+					eof = fscanf(file, "%c", &str[++flag]) != 1;
+					ch = str[flag];
+					if(ch == '=') { ch = 10;  words = new TOKEN{ w[str],words }; flush = 1; }
+					else { words = new TOKEN{ w[">>"],words }; flush = 1; }
 				}
-			}
-			else {
-				ch = 10;
-				if (w.find(str) != w.end()) {
-					words = new TOKEN{ w[str],words }; flush = 1;
+				else { words = new TOKEN{ w[str[0]],words }; flush = 1; }
+				break;
+			case '<':
+				if (ch == '=') { ch = 10;  words = new TOKEN{ w[str],words }; flush = 1; }
+				else if (ch == '<') {
+					eof = fscanf(file, "%c", &str[++flag]) != 1;
+					ch = str[flag];
+					if (ch == '=') { ch = 10;  words = new TOKEN{ w[str],words }; flush = 1; }
+					else { words = new TOKEN{ w["<<"],words }; flush = 1; }
 				}
-				else if (strcmp(str, "//") == 0) {
+				else { words = new TOKEN{ w[str[0]],words }; flush = 1; }
+				break;
+			case '%':
+			case '^':
+			case '*':
+			case '!':
+			case '=':
+				if (ch == '=') { ch = 10;  words = new TOKEN{ w[str],words }; flush = 1; }
+				else { words = new TOKEN{ w[str[0]],words }; flush = 1; }
+				break;
+			case '/':
+				if (ch == '=') { ch = 10;  words = new TOKEN{ w[str],words }; flush = 1; }
+				else if (ch == '/') {
 					while (fscanf(file, "%c", &ch) == 1 && ch != '\n');
 					flush = 1;
 				}
-				else if (strcmp(str, "/*") == 0) {
+				else if (ch == '*') {
 					do {
 						while (fscanf(file, "%c", &ch) == 1 && ch != '*');
 					} while (fscanf(file, "%c", &ch) == 1 && ch != '/');
 					flush = 1; ch = '\n';
 				}
+				else { words = new TOKEN{ str[0],words }; flush = 1; }
+				break;
+			case '+':
+				if (ch == '+' || ch == '=') { ch = 10;  words = new TOKEN{ w[str],words }; flush = 1; }
+				else { words = new TOKEN{ str[0],words }; flush = 1; }
+				break;
+			case '-':
+				if (ch == '>' || ch == '-' || ch == '=') { ch = 10;  words = new TOKEN{ w[str],words }; flush = 1; }
+				else { words = new TOKEN{ str[0],words }; flush = 1; }
+				break;
+			case '&':
+				if (ch == '&' || ch == '=') { ch = 10;  words = new TOKEN{ w[str],words }; flush = 1; }
+				else { words = new TOKEN{ str[0],words }; flush = 1; }
+				break;
+			case '.':
+				if (ch == '.') {
+					eof = fscanf(file, "%c", &str[++flag]) != 1;
+					ch = str[flag];
+					if (ch == '.') { ch = 10;  words = new TOKEN{ w[str],words }; flush = 1; }
+					else { words = new TOKEN{ SCAN_WRONG,words }; flush = 1; }
+				}
+				else { words = new TOKEN{ str[0],words }; flush = 1; }
+				break;
+			default:
+				words = new TOKEN{ str[0],words }; flush = 1;
 			}
 		}
 		if (flush) {

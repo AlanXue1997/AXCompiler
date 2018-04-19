@@ -40,6 +40,10 @@ int main(int argc, char* argv[]) {
 	int k;
 	do {
 		words = tokenScan(file);
+		if (words->code == SCAN_WRONG) {
+			printf("SCANN ERROR");
+			break;
+		}
 		outputWord(words);
 		k = parse(words->code);
 		printf("\n");
