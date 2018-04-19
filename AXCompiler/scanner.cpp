@@ -132,7 +132,7 @@ TOKEN * tokenScan(FILE * file) {
 			switch (str[0]) {
 			case '|':
 				if (ch == '|' || ch == '=') { ch = 10;  words = new TOKEN{ w[str],words }; flush = 1; }
-				else { words = new TOKEN{ str[0],words }; flush = 1; }
+				else { words = new TOKEN{ w[std::string(1,str[0])],words }; flush = 1; }
 				break;
 			case '>':
 				if (ch == '=') { ch = 10;  words = new TOKEN{ w[str],words }; flush = 1; }
@@ -142,7 +142,7 @@ TOKEN * tokenScan(FILE * file) {
 					if(ch == '=') { ch = 10;  words = new TOKEN{ w[str],words }; flush = 1; }
 					else { words = new TOKEN{ w[">>"],words }; flush = 1; }
 				}
-				else { words = new TOKEN{ w[str[0]],words }; flush = 1; }
+				else { words = new TOKEN{ w[std::string(1,str[0])],words }; flush = 1; }
 				break;
 			case '<':
 				if (ch == '=') { ch = 10;  words = new TOKEN{ w[str],words }; flush = 1; }
@@ -152,7 +152,7 @@ TOKEN * tokenScan(FILE * file) {
 					if (ch == '=') { ch = 10;  words = new TOKEN{ w[str],words }; flush = 1; }
 					else { words = new TOKEN{ w["<<"],words }; flush = 1; }
 				}
-				else { words = new TOKEN{ w[str[0]],words }; flush = 1; }
+				else { words = new TOKEN{ w[std::string(1,str[0])],words }; flush = 1; }
 				break;
 			case '%':
 			case '^':
@@ -160,7 +160,7 @@ TOKEN * tokenScan(FILE * file) {
 			case '!':
 			case '=':
 				if (ch == '=') { ch = 10;  words = new TOKEN{ w[str],words }; flush = 1; }
-				else { words = new TOKEN{ w[str[0]],words }; flush = 1; }
+				else { words = new TOKEN{ w[std::string(1,str[0])],words }; flush = 1; }
 				break;
 			case '/':
 				if (ch == '=') { ch = 10;  words = new TOKEN{ w[str],words }; flush = 1; }
@@ -174,19 +174,19 @@ TOKEN * tokenScan(FILE * file) {
 					} while (fscanf(file, "%c", &ch) == 1 && ch != '/');
 					flush = 1; ch = '\n';
 				}
-				else { words = new TOKEN{ str[0],words }; flush = 1; }
+				else { words = new TOKEN{ w[std::string(1,str[0])],words }; flush = 1; }
 				break;
 			case '+':
 				if (ch == '+' || ch == '=') { ch = 10;  words = new TOKEN{ w[str],words }; flush = 1; }
-				else { words = new TOKEN{ str[0],words }; flush = 1; }
+				else { words = new TOKEN{ w[std::string(1,str[0])],words }; flush = 1; }
 				break;
 			case '-':
 				if (ch == '>' || ch == '-' || ch == '=') { ch = 10;  words = new TOKEN{ w[str],words }; flush = 1; }
-				else { words = new TOKEN{ str[0],words }; flush = 1; }
+				else { words = new TOKEN{ w[std::string(1,str[0])],words }; flush = 1; }
 				break;
 			case '&':
 				if (ch == '&' || ch == '=') { ch = 10;  words = new TOKEN{ w[str],words }; flush = 1; }
-				else { words = new TOKEN{ str[0],words }; flush = 1; }
+				else { words = new TOKEN{ w[std::string(1,str[0])],words }; flush = 1; }
 				break;
 			case '.':
 				if (ch == '.') {
@@ -195,10 +195,10 @@ TOKEN * tokenScan(FILE * file) {
 					if (ch == '.') { ch = 10;  words = new TOKEN{ w[str],words }; flush = 1; }
 					else { words = new TOKEN{ SCAN_WRONG,words }; flush = 1; }
 				}
-				else { words = new TOKEN{ str[0],words }; flush = 1; }
+				else { words = new TOKEN{ w[std::string(1,str[0])],words }; flush = 1; }
 				break;
 			default:
-				words = new TOKEN{ str[0],words }; flush = 1;
+				words = new TOKEN{ w[std::string(1,str[0])],words }; flush = 1;
 			}
 		}
 		if (flush) {
