@@ -25,6 +25,11 @@ public:
 	int blen;
 	int exp;
 
+	~LR_Item() {
+		delete[] alpha;
+		delete[] beta;
+	}
+
 	bool operator < (const LR_Item &item2) const{
 		if (L != item2.L) return L<item2.L;
 		else if (alen != item2.alen) return alen < item2.alen;
