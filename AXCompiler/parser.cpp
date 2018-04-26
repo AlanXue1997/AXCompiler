@@ -4,6 +4,9 @@ static int table[N_STATE][N_TOTAL];
 
 production pros[N_PRODUCTION];
 static std::stack<item> s;
+word2int w2i;
+name2int n2i;
+int2name i2n;
 
 void new_pro(int len, ...) {
 	static int num = 0;
@@ -66,9 +69,9 @@ void add_var(name2int &n2i, int2name &i2n, production *pros) {
 
 void init_parse() {
 	s.push(item{ 0, END });//bottom of stack, END denotes '#'
-	word2int w2i = getWord2int();
-	name2int n2i = getName2int();
-	int2name i2n = getInt2name();
+	w2i = getWord2int();
+	n2i = getName2int();
+	i2n = getInt2name();
 	add_var(n2i, i2n, pros);
 
 	
@@ -94,6 +97,13 @@ int parse(int t) {
 				std::cout << "Error when using r" << std::endl;
 			}
 		}
+#ifdef LOG_PRODUCTION
+		std::cout << i2n[p.L] << " -> ";
+		for (int i = 0; i < p.len; i++) {
+			std::cout << i2n[p.R[i]] << ' ';
+		}
+		std::cout<<std::endl;
+#endif
 		s.push(item{ table[s.top().state][p.L] % N_STATE,p.L });
 		k = table[s.top().state][t];
 	}

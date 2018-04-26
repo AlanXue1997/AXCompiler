@@ -1,5 +1,27 @@
-int main(){
-	char ch[100] = "123451234";
-	x -= 10;
-	return 0;
+struct test
+{
+	int a;
+	int b;
+};
+float cal_average(float *score, int n)
+{
+	float total_score = 0;
+	int i = 0;
+	for (; i != n; i++)
+	{
+		scanf("%f", score + i);
+		total_score += score[i];
+	}
+	return total_score / n;
+}
+int main()
+{
+	struct test t;
+	int n;
+	float score[100];
+	t.a = 10;
+	printf("%d\n", t.a);
+	printf("请输入学生人数");
+	scanf("%d", &n);
+	printf("全班学生的平均成绩为%f", cal_average(score, n));
 }

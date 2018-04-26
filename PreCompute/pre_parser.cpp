@@ -9,6 +9,7 @@
 #define TERM_SET std::set<int>
 
 static int table[N_FAMILY][N_TOTAL];
+//static int table2[N_FAMILY][N_TOTAL];
 
 static TERM_SET first[N_TOTAL];
 static production pros[N_PRODUCTION];
@@ -188,6 +189,7 @@ void get_family() {
 						if (family[k] == s)break;
 						k++;
 					}
+					//table2[i][j] = k;
 					if (k == flag) {
 #ifdef LOG
 						std::cout << "f[" << (flag + 1) << "/" << N_FAMILY << "]" << std::endl;

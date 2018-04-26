@@ -9,6 +9,8 @@
 #include "scanner.h"
 #include "tokens.h"
 
+#define LOG_PRODUCTION
+
 #define N_PRODUCTION 212
 #define N_STATE 1572
 #define TERMINATION 85
