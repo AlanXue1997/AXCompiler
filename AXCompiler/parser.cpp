@@ -8,6 +8,7 @@ word2int w2i;
 name2int n2i;
 int2name i2n;
 
+//add new productions to array "pros"
 void new_pro(int len, ...) {
 	static int num = 0;
 
@@ -23,6 +24,7 @@ void new_pro(int len, ...) {
 	num++;
 }
 
+//read from poductions, add variables to those dictionaries and add productions to pros
 void add_var(name2int &n2i, int2name &i2n, production *pros) {
 	std::ifstream fin("productions.txt");
 	int n = i2n.size() + N_TYPE + 1;
@@ -87,8 +89,8 @@ void init_parse() {
 	f.close();
 }
 
-int parse(int t) {
-	int k = table[s.top().state][t];
+int parse(TOKEN* t) {
+	int k = table[s.top().state][t->code];
 	while (k >= N_STATE) {//R
 		k %= N_STATE;
 		production &p = pros[k];
@@ -100,6 +102,7 @@ int parse(int t) {
 				std::cout << "Error when using r" << std::endl;
 			}
 		}
+		trans_reduction(p.L, p.sub_index, i2n);
 #ifdef LOG_PRODUCTION
 		std::cout << i2n[p.L] << " -> ";
 		for (int i = 0; i < p.len; i++) {
@@ -108,8 +111,11 @@ int parse(int t) {
 		std::cout<<std::endl;
 #endif
 		s.push(item{ table[s.top().state][p.L] % N_STATE,p.L });
-		k = table[s.top().state][t];
+		k = table[s.top().state][t->code];
 	}
-	if (k != ACC && k != NONE) s.push(item{ k, t });
+	if (k != ACC && k != NONE) {
+		s.push(item{ k, t->code });
+		trans_add(t, i2n);
+	}
 	return k;
 }

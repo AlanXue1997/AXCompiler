@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
 		}
 		outputWord(words);
 		printf("\n");
-		k = parse(words->code);
+		k = parse(words);
 	} while (words->code!=END && k!=NONE);
 	if (words->code == END)printf("ACCEPTED!!!\n");
 	else printf("ERROR");

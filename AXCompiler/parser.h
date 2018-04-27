@@ -8,8 +8,9 @@
 
 #include "scanner.h"
 #include "tokens.h"
+#include "trans_subs.h"
 
-#define LOG_PRODUCTION
+//#define LOG_PRODUCTION
 
 #define N_PRODUCTION 212
 #define N_STATE 1572
@@ -33,4 +34,4 @@ struct item {
 
 void add_var(name2int &n2i, int2name &i2n, production *pros);
 void init_parse();
-int parse(int t);
+int parse(TOKEN* t);
