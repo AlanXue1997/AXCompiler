@@ -1,9 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include "scanner.h"
-#include "parser.h"
-#include "test.h"
-#include "tokens.h"
+#include "main.h"
 
 void init() {
 	init_parse();

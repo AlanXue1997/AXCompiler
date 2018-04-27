@@ -30,6 +30,7 @@ void add_var(name2int &n2i, int2name &i2n, production *pros) {
 	pros[0].len = 1;
 	pros[0].R = new int[1];
 	pros[0].R[1] = n + 1;
+	pros[0].sub_index = 0;
 	n2i["S0"] = n; i2n[n] = "S0"; n++;
 	std::string st;
 	fin >> st;
@@ -39,6 +40,7 @@ void add_var(name2int &n2i, int2name &i2n, production *pros) {
 		if (n2i.find(st) == n2i.end()) {
 			n2i[st] = n; i2n[n] = st; n++;
 		}
+		int sub_index = 0;
 		int L = n2i[st];
 		int R[20];
 		int len;
@@ -61,6 +63,7 @@ void add_var(name2int &n2i, int2name &i2n, production *pros) {
 			pros[flag].len = len;
 			pros[flag].R = new int[len];
 			for (int i = 0; i < len; ++i) pros[flag].R[i] = R[i];
+			pros[flag].sub_index = sub_index++;
 			flag++;
 			//std::cout << flag << std::endl;
 		} while (st != ";");

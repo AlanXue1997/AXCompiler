@@ -18,12 +18,15 @@
 #define ACC -1
 #define NONE -2
 
+//L->R L has only one variable, R may have 0,1,2 or more variables
 struct production {
 	int L;
 	int *R;
-	int len;
+	int len;//length of R
+	int sub_index;//index of productions with the same L
 };
 
+//item in the syntax stack
 struct item {
 	int state, symble;
 };
