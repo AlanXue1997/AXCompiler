@@ -6,6 +6,9 @@ void init_trans_subs(TOKEN& token, int2name& i2n) {
 	if (i2n[token.code] == "INT") {
 		trans_stack.push((void*)new Int{ "int" });
 	}
+	else if (i2n[token.code] == "IDENTIFIER") {
+		trans_stack.push((void*)new Identifier{ *(std::string*)token.p });
+	}
 }
 
 void trans_add() {
