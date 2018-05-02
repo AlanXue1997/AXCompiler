@@ -102,7 +102,11 @@ int parse(TOKEN* t) {
 				std::cout << "Error when using r" << std::endl;
 			}
 		}
-		trans_reduction(p.L, p.sub_index, i2n);
+#ifdef DO_TRANS
+		if (trans_reduction(p.L, p.sub_index, i2n) == 1) {
+			return ACC;//translator encounted unexpected production
+		}
+#endif
 #ifdef LOG_PRODUCTION
 		std::cout << i2n[p.L] << " -> ";
 		for (int i = 0; i < p.len; i++) {
@@ -115,7 +119,9 @@ int parse(TOKEN* t) {
 	}
 	if (k != ACC && k != NONE) {
 		s.push(item{ k, t->code });
+#ifdef DO_TRANS
 		trans_add(t, i2n);
+#endif
 	}
 	return k;
 }

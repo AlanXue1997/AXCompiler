@@ -10,7 +10,8 @@
 #include "tokens.h"
 #include "trans_subs.h"
 
-//#define LOG_PRODUCTION
+#define LOG_PRODUCTION
+//#define DO_TRANS
 
 #define N_PRODUCTION 212
 #define N_STATE 1572
