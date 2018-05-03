@@ -195,6 +195,7 @@ void get_family() {
 						family[flag++] = s;
 						p = true;
 					}
+					table[i][j] = k;
 				}
 			}
 		}
@@ -205,7 +206,8 @@ void get_family() {
 void get_table() {
 	for (int i = 0; i < N_FAMILY; ++i)
 		for (int j = 0; j < N_TOTAL; ++j)
-			table[i][j] = NONE;
+			if(table[i][j] == 0)
+				table[i][j] = NONE;
 	for (int k = 0; k < N_FAMILY; ++k) {
 #ifdef LOG
 		std::cout << "t[" << (k + 1) << "/" << N_FAMILY << "]" << std::endl;
@@ -213,13 +215,17 @@ void get_table() {
 		for (auto it = family[k].cbegin(); it != family[k].cend(); ++it) {
 			if (it->L == n2i["S0"] && it->alen == 1 && it->alpha[0] == n2i["S0"]+1 && it->blen == 0 && it->exp == END) {
 				table[k][END] = ACC;
-			}
+			}/*
 			else if (it->blen > 0 && isTerm(it->beta[0])) {
 				auto s = go_set(family[k], it->beta[0]);
 				int j = 0;
 				while (!(s == family[j]))j++;
 				table[k][it->beta[0]] = j;//Sj
-			}
+				for (auto jt = s.cbegin(); jt != s.cend(); ++jt) {
+					if (jt->alen > 0) delete[jt->alen] jt->alpha;
+					if (jt->blen > 0) delete[jt->blen] jt->beta;
+				}
+			}*/
 			else if (it->blen == 0) {
 				for (int j = 0; j < N_PRODUCTION; ++j) {
 					if (pros[j].L == it->L && pros[j].len == it->alen) {
@@ -232,7 +238,7 @@ void get_table() {
 					}
 				}
 			}
-		}
+		}/*
 		for (int i = TERMINATION; i < N_TOTAL; ++i) {
 			auto s = go_set(family[k], i);
 			if (s.size() > 0) {
@@ -240,7 +246,11 @@ void get_table() {
 				while (!(s == family[j]))j++;
 				table[k][i] = j;
 			}
-		}
+			for (auto jt = s.cbegin(); jt != s.cend(); ++jt) {
+				if (jt->alen > 0) delete[jt->alen] jt->alpha;
+				if (jt->blen > 0) delete[jt->blen] jt->beta;
+			}
+		}*/
 	}
 }
 

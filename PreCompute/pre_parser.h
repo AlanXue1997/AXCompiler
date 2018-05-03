@@ -26,8 +26,8 @@ public:
 	int exp;
 
 	~LR_Item() {
-		delete[] alpha;
-		delete[] beta;
+		//if (alen > 0) delete[alen] alpha;
+		//if (blen > 0) delete[blen] beta;
 	}
 
 	bool operator < (const LR_Item &item2) const{
