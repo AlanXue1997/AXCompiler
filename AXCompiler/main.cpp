@@ -46,6 +46,8 @@ int main(int argc, char* argv[]) {
 	if (words->code == END)printf("ACCEPTED!!!\n");
 	else printf("ERROR");
 	
+	output_global_variables();
+	output_local_variables();
 	//-----------------------------------------------
 	system("pause");
 	return 0;

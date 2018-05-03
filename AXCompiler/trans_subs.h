@@ -9,6 +9,9 @@
 
 //#define VARIABLE_LIST std::map<std::string,std::string>
 
+//#define VARIABLE_LIST_MAP std::map<std::string, VARIABLE_LIST*>
+#define FUNCTION_LIST std::map<std::string, FUNCTION>
+
 struct VARIABLE {
 	std::string type;
 	int size;
@@ -69,6 +72,13 @@ public:
 	}
 };
 
+struct FUNCTION {
+	std::string name;
+	VARIABLE var;
+	int addr;
+	VARIABLE_LIST * parameter_variables;
+};
+
 struct Identifier {
 	std::string name;
 };
@@ -82,7 +92,7 @@ struct DeclarationSpecifiers {
 };
 
 struct DeclarationList {
-	VARIABLE_LIST variable_list;
+	VARIABLE_LIST *variable_list;
 };
 
 struct Declaration {
@@ -92,12 +102,12 @@ struct Declaration {
 
 struct DirectDeclarator {
 	std::string name;
-	VARIABLE_LIST variable_list;
+	VARIABLE_LIST *variable_list;
 };
 
 struct Declarator {
 	std::string name;
-	VARIABLE_LIST variable_list;
+	VARIABLE_LIST *variable_list;
 };
 
 struct InitDeclarator {
@@ -112,10 +122,12 @@ struct ExternalDeclaration {
 	int declaration_type;//reducted from declaration(1) or function(0)
 	VARIABLE var;
 	std::string name;
+	FUNCTION func;
 };
 
 struct TranslateUnit {
-	VARIABLE_LIST variable_list;
+	VARIABLE_LIST *variable_list = NULL;
+	FUNCTION_LIST *function_list = NULL;
 };
 
 struct TrandeclarationSpecifiers {
@@ -129,17 +141,24 @@ struct ParameterDeclaration {
 };
 
 struct ParameterList {
-	VARIABLE_LIST variable_list;
+	VARIABLE_LIST *variable_list;
 };
 
 struct ParameterTypeList {
-	VARIABLE_LIST variable_list;
+	VARIABLE_LIST *variable_list;
 };
 
 struct CompoundStatement {
-	VARIABLE_LIST variable_list;
+	VARIABLE_LIST *variable_list;
+};
+
+struct FunctionDefinition {
+	FUNCTION func;
 };
 
 void init_trans_subs();
 int trans_add(TOKEN* token, int2name& i2n);
 int trans_reduction(int L, int sub_index, int2name& i2n);
+
+void output_global_variables();
+void output_local_variables();
