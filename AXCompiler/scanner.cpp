@@ -86,10 +86,10 @@ TOKEN * tokenScan(FILE * file) {
 			else { state = S_OP; }
 		}
 		else if (state == S_INT) {
-			/*if (ch == '.') {
+			if (ch == '.') {
 				state = S_DOUBLE;
 			}
-			else*/ 
+			else
 			if (ch < '0' || ch > '9') {
 				str[flag] = 0;
 				words = new TOKEN{ CONSTANT,words };
@@ -98,7 +98,7 @@ TOKEN * tokenScan(FILE * file) {
 		}
 		else if (state == S_DOUBLE) {
 			if (ch < '0' || ch > '9') {
-				words = new TOKEN{ CONST_DOUBLE,words };
+				words = new TOKEN{ CONSTANT,words };
 				flush = 1;
 			}
 		}
