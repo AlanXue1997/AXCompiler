@@ -1,19 +1,18 @@
 #include "trans_subs.h"
 
-#define SIZE_INT 4
-#define SIZE_DOUBLE 8
-
 std::stack<void*> trans_stack;
 
 VARIABLE_LIST *global_variables;
 VARIABLE_LIST *local_variables;
 VARIABLE_LIST *parameter_variables;
+INT_LIST *int_list;
+QUADRUPLE_LIST *all_quadruple;
 
-#define UPEXPECTED_PRODUCTION printf("[Wrong] %dth production of %s not defined\n", sub_index, i2n[L].c_str()); return 1;
-#define UNDEFINE_CASE printf("[Wrong] not defined case in %dth production of %s\n", sub_index, i2n[L].c_str()); return 1;
+#define UPEXPECTED_PRODUCTION printf("[Wrong]\n\t %dth production of %s not defined\n", sub_index, i2n[L].c_str()); return 1;
+#define UNDEFINE_CASE printf("[Wrong]\n\t not defined case in %dth production of %s\n", sub_index, i2n[L].c_str()); return 1;
 
 void init_trans_subs() {
-	
+	int_list = new INT_LIST;
 }
 
 void output_global_variables() {
@@ -24,22 +23,84 @@ void output_local_variables() {
 	(*local_variables) << std::cout << std::endl;
 }
 
+void output_int_list() {
+	for (auto it = int_list->cbegin(); it != int_list->cend(); ++it) {
+		std::cout << "|" << it->first << "\t|" << it->second << "\t|" << std::endl;
+	}
+}
+
+void new_const_int(const std::string num) {
+	int_list->insert(std::pair<std::string, int>(num,atoi(num.c_str())));
+}
+
+void new_const_int(int num) {
+	int_list->insert(std::pair<std::string, int>(std::to_string(num), num));
+}
+
+void output_all_quadruple() {
+	std::cout << "+-------+-------+-------+-------+" << std::endl;
+	std::cout << "|op\t|arg1\t|arg2\t|output\t|" << std::endl;
+	std::cout << "+-------+-------+-------+-------+" << std::endl;
+	if (all_quadruple != NULL) {
+		for (auto it = all_quadruple->cbegin(); it != all_quadruple->cend(); ++it) {
+			std::cout << "|" << it->op << "\t";
+			std::cout << "|" << it->arg1 << "\t";
+			std::cout << "|" << it->arg2 << "\t";
+			std::cout << "|" << it->result << "\t|" << std::endl;
+		}
+		std::cout << "+-------+-------+-------+-------+" << std::endl;
+	}
+}
+
 int trans_add(TOKEN* token, int2name& i2n) {
 	if (i2n[token->code] == "INT") {
-		trans_stack.push((void*)new VARIABLE{ "int", SIZE_INT });
+		trans_stack.push((void*)new VARIABLE{ "int", SIZE_INT, 0, NULL });
 	}
 	else if(i2n[token->code] == "DOUBLE") {
-		trans_stack.push((void*)new VARIABLE{ "double", SIZE_DOUBLE });
+		trans_stack.push((void*)new VARIABLE{ "double", SIZE_DOUBLE, 0, NULL });
 	}
 	else if (i2n[token->code] == "IDENTIFIER") {
 		trans_stack.push((void*)new Identifier{ *(std::string*)token->p });
 		//printf("%s", ((Identifier*)trans_stack.top())->name);
+	}
+	else if (i2n[token->code] == "CONSTANT"){
+		new_const_int(*(std::string*)token->p);
+		trans_stack.push((void*)new Constant{ *(std::string*)token->p });
 	}
 	else {
 		//printf("[Wrong] Unexpected TOKEN: %s", i2n[token->code]);
 		//return 1;
 	}
 	return 0;
+}
+
+QUADRUPLE_LIST* new_quadruple_list(QUADRUPLE_LIST* quadruple_list_l, QUADRUPLE_LIST* quadruple_list_r) {
+	QUADRUPLE_LIST* quadruple_list;
+	if (quadruple_list_l != NULL) {
+		//(sub)additivie_expression HAS quadruple list
+		quadruple_list = quadruple_list_l;
+		if (quadruple_list_r != NULL) {
+			quadruple_list->splice(quadruple_list->end(), *quadruple_list_r);
+			delete quadruple_list_r;
+		}
+	}
+	else {
+		//(sub)additive_expression does NOT have quadruple list
+		if (quadruple_list_r != NULL) {
+			quadruple_list = quadruple_list_r;
+		}
+		else {
+			quadruple_list = new QUADRUPLE_LIST;
+		}
+	}
+	return quadruple_list;
+}
+
+QUADRUPLE_LIST* new_quadruple_list(QUADRUPLE_LIST* quadruple_list_l, QUADRUPLE_LIST* quadruple_list_r, const QUADRUPLE quadruple) {
+	QUADRUPLE_LIST* quadruple_list;
+	quadruple_list = new_quadruple_list(quadruple_list_l, quadruple_list_r);
+	quadruple_list->push_back(quadruple);
+	return quadruple_list;
 }
 
 int trans_reduction(int L, int sub_index, int2name& i2n) {
@@ -73,6 +134,29 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 			trans_stack.pop();
 			trans_stack.push((void*)directDeclarator);
 		}
+		else if (sub_index == 2) {
+			DirectDeclarator *directDeclarator = new DirectDeclarator;
+
+			std::string num = ((Constant*)trans_stack.top())->name;
+			delete (Constant*)trans_stack.top();
+			trans_stack.pop();
+
+			if (int_list->find(num) == int_list->end()) {
+				std::cout << "Only CONST INT is acceptable in \"[]\"" << std::endl;
+				return 1;
+			}
+			directDeclarator->array_link = new ARRAY_LINK;
+			directDeclarator->array_link->vari_or_cons_name = num;
+
+			directDeclarator->array_link->next = ((DirectDeclarator*)trans_stack.top())->array_link;
+			directDeclarator->name = ((DirectDeclarator*)trans_stack.top())->name;
+			directDeclarator->variable_list = ((DirectDeclarator*)trans_stack.top())->variable_list;
+
+			delete (DirectDeclarator*)trans_stack.top();
+			trans_stack.pop();
+
+			trans_stack.push((void*)directDeclarator);
+		}
 		else if (sub_index == 4) {
 			DirectDeclarator *directDeclarator = new DirectDeclarator;
 
@@ -80,6 +164,16 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 			delete (ParameterList*)trans_stack.top();
 			trans_stack.pop();
 
+			directDeclarator->name = ((DirectDeclarator*)trans_stack.top())->name;
+			delete (DirectDeclarator*)trans_stack.top();
+			trans_stack.pop();
+
+			trans_stack.push((void*)directDeclarator);
+		}
+		else if (sub_index == 6) {
+			DirectDeclarator *directDeclarator = new DirectDeclarator;
+
+			directDeclarator->variable_list = NULL;
 			directDeclarator->name = ((DirectDeclarator*)trans_stack.top())->name;
 			delete (DirectDeclarator*)trans_stack.top();
 			trans_stack.pop();
@@ -94,6 +188,7 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 		if (sub_index == 1) {
 			Declarator *declarator = new Declarator;
 			declarator->name = ((DirectDeclarator*)trans_stack.top())->name;
+			declarator->array_link = ((DirectDeclarator*)trans_stack.top())->array_link;
 			declarator->variable_list = ((DirectDeclarator*)trans_stack.top())->variable_list;
 			delete (DirectDeclarator*)trans_stack.top();
 			trans_stack.pop();
@@ -105,7 +200,9 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 	}
 	else if (i2n[L] == "init_declarator") {
 		if (sub_index == 0) {
-			InitDeclarator *initDeclarator = new InitDeclarator{ ((Declarator*)trans_stack.top())->name };
+			InitDeclarator *initDeclarator = new InitDeclarator;
+			initDeclarator->name = ((Declarator*)trans_stack.top())->name;
+			initDeclarator->array_link = ((Declarator*)trans_stack.top())->array_link;
 			delete (Declarator*)trans_stack.top();
 			trans_stack.pop();
 			trans_stack.push((void*)initDeclarator);
@@ -116,7 +213,9 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 	}
 	else if (i2n[L] == "init_declarator_list") {
 		if (sub_index == 0) {
-			InitDeclaratorList *initDeclaratorList = new InitDeclaratorList{ ((InitDeclarator*)trans_stack.top())->name };
+			InitDeclaratorList *initDeclaratorList = new InitDeclaratorList;
+			initDeclaratorList->name = ((InitDeclarator*)trans_stack.top())->name;
+			initDeclaratorList->array_link = ((InitDeclarator*)trans_stack.top())->array_link;
 			delete (InitDeclarator*)trans_stack.top();
 			trans_stack.pop();
 			trans_stack.push((void*)initDeclaratorList);
@@ -168,13 +267,16 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 	else if (i2n[L] == "declaration") {
 		if (sub_index == 1) {
 			Declaration *declaration = new Declaration;
-			//get type first
+			//get name first
+			ARRAY_LINK* array_link = ((InitDeclaratorList*)trans_stack.top())->array_link;
 			declaration->name = { ((InitDeclaratorList*)trans_stack.top())->name };
 			delete (InitDeclaratorList*)trans_stack.top();
 			trans_stack.pop();
 
-			//get name then
+			//get type then
 			declaration->var = { ((DeclarationSpecifiers*)trans_stack.top())->var };
+			declaration->var.pointer = array_link;
+			declaration->var.array = array_link != NULL;
 			delete (DeclarationSpecifiers*)trans_stack.top();
 			trans_stack.pop();
 
@@ -383,13 +485,35 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 		}
 	}
 	else if (i2n[L] == "compound_statement") {
-		if (sub_index == 2) {
+		if (sub_index == 1) {
+			CompoundStatement *compoundStatement = new CompoundStatement;
+			compoundStatement->quadruple_list = ((StatementList*)trans_stack.top())->quadruple_list;
+			delete (StatementList*)trans_stack.top();
+			trans_stack.pop();
+
+			trans_stack.push((void*)compoundStatement);
+			all_quadruple = compoundStatement->quadruple_list;
+		}
+		else if (sub_index == 2) {
 			CompoundStatement *compoundStatement = new CompoundStatement;
 			compoundStatement->variable_list = ((DeclarationList*)trans_stack.top())->variable_list;
 			delete (DeclarationList*)trans_stack.top();
 			trans_stack.pop();
 
 			trans_stack.push((void*)compoundStatement);
+		}
+		else if (sub_index == 3) {
+			CompoundStatement *compoundStatement = new CompoundStatement;
+			compoundStatement->quadruple_list = ((StatementList*)trans_stack.top())->quadruple_list;
+			delete (StatementList*)trans_stack.top();
+			trans_stack.pop();
+
+			compoundStatement->variable_list = ((DeclarationList*)trans_stack.top())->variable_list;
+			delete (DeclarationList*)trans_stack.top();
+			trans_stack.pop();
+
+			trans_stack.push((void*)compoundStatement);
+			all_quadruple = compoundStatement->quadruple_list;
 		}
 		else {
 			UPEXPECTED_PRODUCTION
@@ -412,6 +536,445 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 			trans_stack.pop();
 			
 			trans_stack.push((void*)functionDefinition);
+		}
+		else {
+			UPEXPECTED_PRODUCTION
+		}
+	}
+	else if (i2n[L] == "assignment_expression") {
+		if (sub_index == 0) {
+			AssignmentExpression *assignmentExpression = new AssignmentExpression;
+			assignmentExpression->vari_or_cons_name = ((ConditionalExpression*)trans_stack.top())->vari_or_cons_name;
+			assignmentExpression->quadruple_list = ((ConditionalExpression*)trans_stack.top())->quadruple_list;
+			delete (ConditionalExpression*)trans_stack.top();
+			trans_stack.pop();
+			trans_stack.push((void*)assignmentExpression);
+		}
+		else if (sub_index == 1) {
+			AssignmentExpression *assignmentExpression = new AssignmentExpression;
+			
+			QUADRUPLE_LIST* quadruple_list_r = ((AssignmentExpression*)trans_stack.top())->quadruple_list;
+			QUADRUPLE quadruple;
+			quadruple.arg1 = ((AssignmentExpression*)trans_stack.top())->vari_or_cons_name;
+			quadruple.arg2 = "";
+			delete (AssignmentExpression*)trans_stack.top();
+			trans_stack.pop();
+
+			quadruple.op = ((AssignmentOperator*)trans_stack.top())->operator_type;
+			delete ((AssignmentOperator*)trans_stack.top());
+			trans_stack.pop();
+
+			QUADRUPLE_LIST* quadruple_list_l = ((UnaryExpression*)trans_stack.top())->quadruple_list;
+			quadruple.result = ((UnaryExpression*)trans_stack.top())->vari_or_cons_name;
+			delete (UnaryExpression*)trans_stack.top();
+			trans_stack.pop();
+			
+			assignmentExpression->vari_or_cons_name = quadruple.result;
+
+			//ATTENTION, l and r exchanged because right expression should be calculated firstly in assignment expression
+			assignmentExpression->quadruple_list = new_quadruple_list(quadruple_list_r, quadruple_list_l, quadruple);
+
+			trans_stack.push((void*)assignmentExpression);
+		}
+		else {
+			UPEXPECTED_PRODUCTION
+		}
+	}
+	else if (i2n[L] == "conditional_expression") {
+		if (sub_index == 0) {
+			ConditionalExpression *conditionalExpression = new ConditionalExpression;
+			conditionalExpression->vari_or_cons_name = ((LogicalOrExpression*)trans_stack.top())->vari_or_cons_name;
+			conditionalExpression->quadruple_list = ((LogicalOrExpression*)trans_stack.top())->quadruple_list;
+			delete (LogicalOrExpression*)trans_stack.top();
+			trans_stack.pop();
+			trans_stack.push((void*)conditionalExpression);
+		}
+		else {
+			UPEXPECTED_PRODUCTION
+		}
+	}
+	else if (i2n[L] == "logical_or_expression") {
+		if (sub_index == 0) {
+			LogicalOrExpression *logicalOrExpression = new LogicalOrExpression;
+			logicalOrExpression->vari_or_cons_name = ((LogicalAndExpression*)trans_stack.top())->vari_or_cons_name;
+			logicalOrExpression->quadruple_list = ((LogicalAndExpression*)trans_stack.top())->quadruple_list;
+			delete (LogicalAndExpression*)trans_stack.top();
+			trans_stack.pop();
+			trans_stack.push((void*)logicalOrExpression);
+		}
+		else {
+			UPEXPECTED_PRODUCTION
+		}
+	}
+	else if (i2n[L] == "logical_and_expression") {
+		if (sub_index == 0) {
+			LogicalAndExpression *logicalAndExpression = new LogicalAndExpression;
+			logicalAndExpression->vari_or_cons_name = ((InclusiveOrExpression*)trans_stack.top())->vari_or_cons_name;
+			logicalAndExpression->quadruple_list = ((InclusiveOrExpression*)trans_stack.top())->quadruple_list;
+			delete (InclusiveOrExpression*)trans_stack.top();
+			trans_stack.pop();
+			trans_stack.push((void*)logicalAndExpression);
+		}
+		else {
+			UPEXPECTED_PRODUCTION
+		}
+	}
+	else if (i2n[L] == "inclusive_or_expression") {
+		if (sub_index == 0) {
+			InclusiveOrExpression *inclusiveOrExpression = new InclusiveOrExpression;
+			inclusiveOrExpression->vari_or_cons_name = ((ExclusiveOrExpression*)trans_stack.top())->vari_or_cons_name;
+			inclusiveOrExpression->quadruple_list = ((ExclusiveOrExpression*)trans_stack.top())->quadruple_list;
+			delete (ExclusiveOrExpression*)trans_stack.top();
+			trans_stack.pop();
+			trans_stack.push((void*)inclusiveOrExpression);
+		}
+		else {
+			UPEXPECTED_PRODUCTION
+		}
+	}
+	else if (i2n[L] == "exclusive_or_expression") {
+		if (sub_index == 0) {
+			ExclusiveOrExpression *exclusiveOrExpression = new ExclusiveOrExpression;
+			exclusiveOrExpression->vari_or_cons_name = ((AndExpression*)trans_stack.top())->vari_or_cons_name;
+			exclusiveOrExpression->quadruple_list = ((AndExpression*)trans_stack.top())->quadruple_list;
+			delete (AndExpression*)trans_stack.top();
+			trans_stack.pop();
+			trans_stack.push((void*)exclusiveOrExpression);
+		}
+		else {
+			UPEXPECTED_PRODUCTION
+		}
+	}
+	else if (i2n[L] == "and_expression") {
+		if (sub_index == 0) {
+			AndExpression *andExpression = new AndExpression;
+			andExpression->vari_or_cons_name = ((EqualityExpression*)trans_stack.top())->vari_or_cons_name;
+			andExpression->quadruple_list = ((EqualityExpression*)trans_stack.top())->quadruple_list;
+			delete (EqualityExpression*)trans_stack.top();
+			trans_stack.pop();
+			trans_stack.push((void*)andExpression);
+		}
+		else {
+			UPEXPECTED_PRODUCTION
+		}
+	}
+	else if (i2n[L] == "equality_expression") {
+		if (sub_index == 0) {
+			EqualityExpression *equalityExpression = new EqualityExpression;
+			equalityExpression->vari_or_cons_name = ((RelationalExpression*)trans_stack.top())->vari_or_cons_name;
+			equalityExpression->quadruple_list = ((RelationalExpression*)trans_stack.top())->quadruple_list;
+			delete (RelationalExpression*)trans_stack.top();
+			trans_stack.pop();
+			trans_stack.push((void*)equalityExpression);
+		}
+		else {
+			UPEXPECTED_PRODUCTION
+		}
+	}
+	else if (i2n[L] == "relational_expression") {
+		if (sub_index == 0) {
+			RelationalExpression *relationalExpression = new RelationalExpression;
+			relationalExpression->vari_or_cons_name = ((ShiftExpression*)trans_stack.top())->vari_or_cons_name;
+			relationalExpression->quadruple_list = ((ShiftExpression*)trans_stack.top())->quadruple_list;
+			delete (ShiftExpression*)trans_stack.top();
+			trans_stack.pop();
+			trans_stack.push((void*)relationalExpression);
+		}
+		else {
+			UPEXPECTED_PRODUCTION
+		}
+	}
+	else if (i2n[L] == "shift_expression") {
+		if (sub_index == 0) {
+			ShiftExpression *shiftExpression = new ShiftExpression;
+			shiftExpression->vari_or_cons_name = ((AdditiveExpression*)trans_stack.top())->vari_or_cons_name;
+			shiftExpression->quadruple_list = ((AdditiveExpression*)trans_stack.top())->quadruple_list;
+			delete (AdditiveExpression*)trans_stack.top();
+			trans_stack.pop();
+			trans_stack.push((void*)shiftExpression);
+		}
+		else {
+			UPEXPECTED_PRODUCTION
+		}
+	}
+	else if (i2n[L] == "additive_expression") {
+		if (sub_index == 0) {
+			AdditiveExpression *additiveExpression = new AdditiveExpression;
+			additiveExpression->vari_or_cons_name = ((MultiplicativeExpression*)trans_stack.top())->vari_or_cons_name;
+			delete (MultiplicativeExpression*)trans_stack.top();
+			trans_stack.pop();
+			trans_stack.push((void*)additiveExpression);
+		}
+		else if (sub_index == 1 || sub_index == 2) {
+			AdditiveExpression *additiveExpression = new AdditiveExpression;
+			QUADRUPLE_LIST *quadruple_list_r = ((MultiplicativeExpression*)trans_stack.top())->quadruple_list;
+
+			QUADRUPLE quadruple;
+			quadruple.op = sub_index==1?"+":"-";
+			quadruple.arg2 = ((MultiplicativeExpression*)trans_stack.top())->vari_or_cons_name;
+
+			delete (MultiplicativeExpression*)trans_stack.top();
+			trans_stack.pop();
+
+			QUADRUPLE_LIST *quadruple_list_l = ((AdditiveExpression*)trans_stack.top())->quadruple_list;
+			quadruple.arg1 = ((AdditiveExpression*)trans_stack.top())->vari_or_cons_name;
+			if (local_variables == NULL)local_variables = new VARIABLE_LIST;
+			quadruple.result = local_variables->new_temp("int");
+			additiveExpression->vari_or_cons_name = quadruple.result;
+
+			delete (AdditiveExpression*)trans_stack.top();
+			trans_stack.pop();
+
+			additiveExpression->quadruple_list = new_quadruple_list(quadruple_list_l, quadruple_list_r, quadruple);
+
+			trans_stack.push((void*)additiveExpression);
+		}
+		else {
+			UPEXPECTED_PRODUCTION
+		}
+	}
+	else if (i2n[L] == "multiplicative_expression") {
+		if (sub_index == 0) {
+			MultiplicativeExpression *multiplicativeExpression = new MultiplicativeExpression;
+			multiplicativeExpression->vari_or_cons_name = ((CastExpression*)trans_stack.top())->vari_or_cons_name;
+			multiplicativeExpression->quadruple_list = ((CastExpression*)trans_stack.top())->quadruple_list;
+			delete (CastExpression*)trans_stack.top();
+			trans_stack.pop();
+			trans_stack.push((void*)multiplicativeExpression);
+		}
+		else if (sub_index == 1 || sub_index == 2 || sub_index == 3) {
+			MultiplicativeExpression *multiplicativeExpression = new MultiplicativeExpression;
+			QUADRUPLE_LIST *quadruple_list_r = ((CastExpression*)trans_stack.top())->quadruple_list;
+
+			QUADRUPLE quadruple;
+			if (sub_index == 1) {
+				quadruple.op = "*";
+			}
+			else if (sub_index == 2) {
+				quadruple.op = "/";
+			}
+			else {
+				quadruple.op = "%";
+			}
+			quadruple.arg2 = ((CastExpression*)trans_stack.top())->vari_or_cons_name;
+
+			delete (CastExpression*)trans_stack.top();
+			trans_stack.pop();
+
+			QUADRUPLE_LIST *quadruple_list_l = ((MultiplicativeExpression*)trans_stack.top())->quadruple_list;
+			quadruple.arg1 = ((MultiplicativeExpression*)trans_stack.top())->vari_or_cons_name;
+			if (local_variables == NULL)local_variables = new VARIABLE_LIST;
+			quadruple.result = local_variables->new_temp("int");
+			multiplicativeExpression->vari_or_cons_name = quadruple.result;
+
+			delete (MultiplicativeExpression*)trans_stack.top();
+			trans_stack.pop();
+
+			multiplicativeExpression->quadruple_list = new_quadruple_list(quadruple_list_l, quadruple_list_r, quadruple);
+
+			trans_stack.push((void*)multiplicativeExpression);
+		}
+		else {
+			UPEXPECTED_PRODUCTION
+		}
+	}
+	else if (i2n[L] == "cast_expression") {
+		if (sub_index == 0) {
+			CastExpression *castExpression = new CastExpression;
+			castExpression->vari_or_cons_name = ((UnaryExpression*)trans_stack.top())->vari_or_cons_name;
+			castExpression->quadruple_list = ((UnaryExpression*)trans_stack.top())->quadruple_list;
+			delete (UnaryExpression*)trans_stack.top();
+			trans_stack.pop();
+			trans_stack.push((void*)castExpression);
+		}
+		else {
+			UPEXPECTED_PRODUCTION
+		}
+	}
+	else if (i2n[L] == "unary_expression") {
+		if (sub_index == 0) {
+			UnaryExpression *unaryExpression = new UnaryExpression;
+			unaryExpression->vari_or_cons_name = ((PostfixExpression*)trans_stack.top())->vari_or_cons_name;
+			unaryExpression->quadruple_list = ((PostfixExpression*)trans_stack.top())->quadruple_list;
+
+			//It's an array
+			if (((PostfixExpression*)trans_stack.top())->array_link != NULL) {
+				ARRAY_LINK *p_use = ((PostfixExpression*)trans_stack.top())->array_link;
+				VARIABLE *variable = local_variables->find(unaryExpression->vari_or_cons_name);
+				if (NULL == variable) {
+					variable = global_variables->find(unaryExpression->vari_or_cons_name);
+				}
+				if (!variable->array) {
+					std::cout << "[Wrong]\n\t\"" << unaryExpression->vari_or_cons_name << "\" is NOT an ARRAY" << std::endl;
+				}
+				ARRAY_LINK *p_define = (ARRAY_LINK*)variable->pointer;
+				int multi = int_list->at(p_define->vari_or_cons_name);
+				int sum = 0;
+				std::string last_variable = p_use->vari_or_cons_name;
+				p_use = p_use->next;
+				p_define = p_define->next;
+				while (p_use != NULL && p_define != NULL) {
+					new_const_int(multi);
+					QUADRUPLE quadruple1;
+					std::string multi_result = local_variables->new_temp("int");
+					quadruple1.op = "*";
+					quadruple1.arg1 = std::to_string(multi);
+					quadruple1.arg2 = p_use->vari_or_cons_name;
+					quadruple1.result = multi_result;
+					unaryExpression->quadruple_list->push_back(quadruple1);
+					QUADRUPLE quadruple2;
+					std::string add_result = local_variables->new_temp("int");
+					quadruple2.op = "+";
+					quadruple2.arg1 = multi_result;
+					quadruple2.arg2 = last_variable;
+					quadruple2.result = add_result;
+					unaryExpression->quadruple_list->push_back(quadruple2);
+					last_variable = add_result;
+					p_use = p_use->next;
+					p_define = p_define->next;
+				}
+				if (p_use != NULL || p_define != NULL) {
+					std::cout << "[Wrong]\n\tDimension of array " << unaryExpression->vari_or_cons_name << " doesn't match" << std::endl;
+				}
+				int size = variable->size;
+				new_const_int(size);
+				QUADRUPLE quadruple_result;
+				std::string total_result = local_variables->new_temp("int");
+				quadruple_result.op = "*";
+				quadruple_result.arg1 = std::to_string(size);
+				quadruple_result.arg2 = last_variable;
+				quadruple_result.result = total_result;
+				unaryExpression->quadruple_list->push_back(quadruple_result);
+				unaryExpression->vari_or_cons_name += "+" + total_result;
+			}
+			delete (PostfixExpression*)trans_stack.top();
+			trans_stack.pop();
+			trans_stack.push((void*)unaryExpression);
+		}
+		else {
+			UPEXPECTED_PRODUCTION
+		}
+	}
+	else if (i2n[L] == "postfix_expression") {
+		if (sub_index == 0) {
+			PostfixExpression *postfixExpression = new PostfixExpression;
+			postfixExpression->vari_or_cons_name = ((PrimaryExpression*)trans_stack.top())->vari_or_cons_name;
+			delete (PrimaryExpression*)trans_stack.top();
+			trans_stack.pop();
+			trans_stack.push((void*)postfixExpression);
+		}
+		else if (sub_index == 1) {
+			PostfixExpression *postfixExpression = new PostfixExpression;
+			postfixExpression->array_link = new ARRAY_LINK;
+			postfixExpression->array_link->vari_or_cons_name = ((Expression*)trans_stack.top())->vari_or_cons_name;
+			QUADRUPLE_LIST *quadruple_list_r = ((Expression*)trans_stack.top())->quadruple_list;
+			delete (Expression*)trans_stack.top();
+			trans_stack.pop();
+
+			postfixExpression->array_link->next = ((PostfixExpression*)trans_stack.top())->array_link;
+			postfixExpression->vari_or_cons_name = ((PostfixExpression*)trans_stack.top())->vari_or_cons_name;
+			QUADRUPLE_LIST *quadruple_list_l = ((PostfixExpression*)trans_stack.top())->quadruple_list;
+			delete (PostfixExpression*)trans_stack.top();
+			trans_stack.pop();
+
+			postfixExpression->quadruple_list = new_quadruple_list(quadruple_list_l, quadruple_list_r);
+			
+			trans_stack.push((void*)postfixExpression);
+		}
+		else {
+			UPEXPECTED_PRODUCTION
+		}
+	}
+	else if (i2n[L] == "primary_expression") {
+		if (sub_index == 0) {
+			PrimaryExpression *primaryExpression = new PrimaryExpression;
+			primaryExpression->vari_or_cons_name = ((Constant*)trans_stack.top())->name;
+			delete (Identifier*)trans_stack.top();
+			trans_stack.pop();
+			trans_stack.push((void*)primaryExpression);
+		}
+		else if (sub_index == 1) {
+			PrimaryExpression *primaryExpression = new PrimaryExpression;
+			primaryExpression->vari_or_cons_name = ((Constant*)trans_stack.top())->name;
+			delete (Constant*)trans_stack.top();
+			trans_stack.pop();
+			trans_stack.push((void*)primaryExpression);
+		}
+		else {
+			UPEXPECTED_PRODUCTION
+		}
+	}
+	else if (i2n[L] == "assignment_operator") {
+		if (sub_index == 0) {
+			AssignmentOperator *assignmentOperator = new AssignmentOperator{ "=" };
+			trans_stack.push((void*)assignmentOperator);
+		}
+		else {
+			UPEXPECTED_PRODUCTION
+		}
+	}
+	else if (i2n[L] == "expression") {
+		if (sub_index == 0) {
+			Expression *expression = new Expression;
+			expression->quadruple_list = ((AssignmentExpression*)trans_stack.top())->quadruple_list;
+			expression->vari_or_cons_name = ((AssignmentExpression*)trans_stack.top())->vari_or_cons_name;
+			delete (AssignmentExpression*)trans_stack.top();
+			trans_stack.pop();
+
+			trans_stack.push((void*)expression);
+		}
+		else {
+			UPEXPECTED_PRODUCTION
+		}
+	}
+	else if (i2n[L] == "expression_statement") {
+		if (sub_index == 1) {
+			ExpressionStatement *expressionStatement = new ExpressionStatement;
+			expressionStatement->quadruple_list = ((Expression*)trans_stack.top())->quadruple_list;
+			delete (Expression*)trans_stack.top();
+			trans_stack.pop();
+
+			trans_stack.push((void*)expressionStatement);
+		}
+		else {
+			UPEXPECTED_PRODUCTION
+		}
+	}
+	else if (i2n[L] == "statement") {
+		if (sub_index == 2) {
+			Statement *statement = new Statement;
+			statement->quadruple_list = ((ExpressionStatement*)trans_stack.top())->quadruple_list;
+			delete (ExpressionStatement*)trans_stack.top();
+			trans_stack.pop();
+
+			trans_stack.push((void*)statement);
+		}
+		else {
+			UPEXPECTED_PRODUCTION
+		}
+	}
+	else if (i2n[L] == "statement_list") {
+		if (sub_index == 0) {
+			StatementList *statementList = new StatementList;
+			statementList->quadruple_list = ((Statement*)trans_stack.top())->quadruple_list;
+			delete (Statement*)trans_stack.top();
+			trans_stack.pop();
+
+			trans_stack.push(statementList);
+		}
+		else {
+			UPEXPECTED_PRODUCTION
+		}
+	}
+	else if (i2n[L] == "constant_expression") {
+		if (sub_index == 0) {
+			ConstantExpression *constantExpression = new ConstantExpression;
+			constantExpression->vari_or_cons_name = ((ConditionalExpression*)trans_stack.top())->vari_or_cons_name;
+			constantExpression->quadruple_list = ((ConditionalExpression*)trans_stack.top())->quadruple_list;
+			delete (ConditionalExpression*)trans_stack.top();
+			trans_stack.pop();
+
+			trans_stack.push((void*)constantExpression);
 		}
 		else {
 			UPEXPECTED_PRODUCTION

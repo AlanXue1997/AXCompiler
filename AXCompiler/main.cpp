@@ -4,6 +4,7 @@ void init() {
 	init_parse();
 	initScanner();
 	init_test();
+	init_trans_subs();
 }
 
 int main(int argc, char* argv[]) {
@@ -42,12 +43,14 @@ int main(int argc, char* argv[]) {
 		outputWord(words);
 		printf("\n");
 		k = parse(words);
-	} while (words->code!=END && k!=NONE);
-	if (words->code == END)printf("ACCEPTED!!!\n");
+	} while (words->code!=END && k!=NONE && k != ACC);
+	if (words->code == END || k==ACC)printf("ACCEPTED!!!\n");
 	else printf("ERROR");
 	
 	output_global_variables();
 	output_local_variables();
+	output_all_quadruple();
+	output_int_list();
 	//-----------------------------------------------
 	system("pause");
 	return 0;
