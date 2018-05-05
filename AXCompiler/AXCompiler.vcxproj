@@ -123,16 +123,12 @@
     <ClCompile Include="parser.cpp" />
     <ClCompile Include="scanner.cpp" />
     <ClCompile Include="test.cpp" />
-    <ClCompile Include="trans_subs.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="main.h" />
     <ClInclude Include="parser.h" />
     <ClInclude Include="scanner.h" />
-    <ClInclude Include="SymbolTable.h" />
     <ClInclude Include="test.h" />
     <ClInclude Include="tokens.h" />
-    <ClInclude Include="trans_subs.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="input.txt" />
