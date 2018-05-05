@@ -5,6 +5,7 @@
 #include <map>
 #include <list>
 #include <iostream>
+#include <iomanip>
 
 #include "scanner.h"
 
@@ -28,6 +29,7 @@ struct QUADRUPLE {
 	std::string arg1;
 	std::string arg2;
 	std::string result;
+	std::string mark = "";
 };
 
 struct VARIABLE {
@@ -318,6 +320,10 @@ struct StatementList {
 
 struct ConstantExpression {
 	std::string vari_or_cons_name;
+	QUADRUPLE_LIST *quadruple_list = NULL;
+};
+
+struct SelectionStatement {
 	QUADRUPLE_LIST *quadruple_list = NULL;
 };
 

@@ -6,6 +6,13 @@ int f(int x) {
 }
 
 int main() {
-	a[f(1)][f(2)] = f(3)+f(4)-f(5)*f(6);
+	int a;
+	scanf_s("%d", &a);
+	if (a > 100) {
+		printf("yes");
+	}
+	else {
+		printf("no");
+	}
 	return 0;
 }
