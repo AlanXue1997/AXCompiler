@@ -336,6 +336,10 @@ void init_trans_subs();
 int trans_add(TOKEN* token, int2name& i2n);
 int trans_reduction(int L, int sub_index, int2name& i2n);
 
+FUNCTION_LIST* get_function_list();
+VARIABLE_LIST *get_global_variables();
+INT_LIST* get_int_list();
+
 void output_global_variables();
 void output_local_variables();
 void output_all_quadruple();
