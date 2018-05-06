@@ -119,6 +119,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CodeGenerator.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="parser.cpp" />
     <ClCompile Include="scanner.cpp" />
@@ -126,6 +127,7 @@
     <ClCompile Include="trans_subs.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CodeGenerator.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="parser.h" />
     <ClInclude Include="scanner.h" />

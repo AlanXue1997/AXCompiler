@@ -5,6 +5,7 @@ void init() {
 	initScanner();
 	init_test();
 	init_trans_subs();
+	init_code_generator();
 }
 
 int main(int argc, char* argv[]) {
