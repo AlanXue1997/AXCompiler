@@ -12,25 +12,6 @@ int main(int argc, char* argv[]) {
 	file = fopen("input.txt", "r");
 
 	init();
-
-	//-----------------------------------------------
-	//Test scanner
-	//-----------------------------------------------
-	/*
-	int k;
-	TOKEN * words;// = tokenScan(file);
-	do {
-		//printf("%d ", words->code);
-		words = tokenScan(file);
-		outputWord(words);
-		printf("\n");
-	}while (words->code != END);
-	*/
-	//-----------------------------------------------
-
-	//-----------------------------------------------
-	//Test parse
-	//-----------------------------------------------
 	
 	TOKEN * words;
 	int k;
@@ -51,7 +32,8 @@ int main(int argc, char* argv[]) {
 	output_local_variables();
 	output_all_quadruple();
 	output_int_list();
-	//-----------------------------------------------
+	output_func_list();
+
 	system("pause");
 	return 0;
 }

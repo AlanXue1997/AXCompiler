@@ -7,6 +7,7 @@ VARIABLE_LIST *local_variables;
 VARIABLE_LIST *parameter_variables;
 INT_LIST *int_list;
 QUADRUPLE_LIST *all_quadruple;
+FUNCTION_LIST *function_list;
 
 #define UPEXPECTED_PRODUCTION printf("[Wrong]\n\t %dth production of %s not defined\n", sub_index, i2n[L].c_str()); return 1;
 #define UNDEFINE_CASE printf("[Wrong]\n\t not defined case in %dth production of %s\n", sub_index, i2n[L].c_str()); return 1;
@@ -44,7 +45,8 @@ void output_quadruple(QUADRUPLE_LIST* quadruple_list) {
 			std::cout << "|" << std::setw(8) << std::left << it->arg1;
 			std::cout << "|" << std::setw(8) << std::left << it->arg2;
 			std::cout << "|" << std::setw(8) << std::left << it->result;
-			std::cout << "|" << std::setw(8) << std::left << it->mark << "|" << std::endl;
+			std::cout << "|" << std::setw(8) << std::left << it->mark;
+			std::cout << "|" << std::endl;
 		}
 		std::cout << "+--------+--------+--------+--------+--------+" << std::endl;
 	}
@@ -54,6 +56,15 @@ void output_all_quadruple() {
 	output_quadruple(all_quadruple);
 }
 
+void output_func_list() {
+	if (function_list != NULL) {
+		for (auto it = function_list->cbegin(); it != function_list->cend(); ++it) {
+			std::cout << "|" << std::setw(8) << std::left << it->first;
+			std::cout << "|" << std::setw(8) << std::left << it->second.var.type;
+			std::cout << "|" << std::endl;
+		}
+	}
+}
 
 std::string new_if_mark() {
 	static int n = 0;
@@ -328,8 +339,8 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 		if (sub_index == 0) {
 			ExternalDeclaration *externalDeclaration = new ExternalDeclaration;
 			externalDeclaration->declaration_type = 0;//It's a function
-
-			externalDeclaration->func = { ((FunctionDefinition*)trans_stack.top())->func };
+			externalDeclaration->name = ((FunctionDefinition*)trans_stack.top())->name;
+			externalDeclaration->func = ((FunctionDefinition*)trans_stack.top())->func;
 			delete (FunctionDefinition*)trans_stack.top();
 			trans_stack.pop();
 
@@ -353,7 +364,7 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 	else if (i2n[L] == "translation_unit") {
 		if (sub_index == 0) {
 			TranslateUnit *translateUnit = new TranslateUnit;
-			if (((ExternalDeclaration*)trans_stack.top())->declaration_type == 1) {
+			if (((ExternalDeclaration*)trans_stack.top())->declaration_type == 1) {//It's a definition
 				translateUnit->variable_list = new VARIABLE_LIST;
 				if (!translateUnit->variable_list->insert(((ExternalDeclaration*)trans_stack.top())->name, ((ExternalDeclaration*)trans_stack.top())->var)) {
 					printf("[Wrong] variable \"%s\" exists", ((ExternalDeclaration*)trans_stack.top())->name.c_str());
@@ -361,7 +372,7 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 				}
 				global_variables = translateUnit->variable_list;
 			}
-			else if (((ExternalDeclaration*)trans_stack.top())->declaration_type == 0) {
+			else if (((ExternalDeclaration*)trans_stack.top())->declaration_type == 0) {//It's a function
 				translateUnit->function_list = new FUNCTION_LIST;
 				translateUnit->function_list->insert(
 					std::pair<std::string, FUNCTION>(
@@ -369,6 +380,7 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 						((ExternalDeclaration*)trans_stack.top())->func
 					)
 				);//Too long...
+				function_list = translateUnit->function_list;
 			}
 			else {
 				UNDEFINE_CASE
@@ -430,6 +442,7 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 
 			trans_stack.push((void*)translateUnit);
 			global_variables = translateUnit->variable_list;
+			function_list = translateUnit->function_list;
 		}
 		else {
 			UPEXPECTED_PRODUCTION
@@ -559,11 +572,13 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 	else if (i2n[L] == "function_definition") {
 		if (sub_index == 1) {
 			FunctionDefinition *functionDefinition = new FunctionDefinition;
-
+			
+			functionDefinition->func.quadruple_list = ((CompoundStatement*)trans_stack.top())->quadruple_list;
+			functionDefinition->func.local_variable_list = ((CompoundStatement*)trans_stack.top())->variable_list;
 			delete (CompoundStatement*)trans_stack.top();
 			trans_stack.pop();
-
-			functionDefinition->func.name = ((Declarator*)trans_stack.top())->name;
+			
+			functionDefinition->name = ((Declarator*)trans_stack.top())->name;
 			functionDefinition->func.parameter_variables = ((Declarator*)trans_stack.top())->variable_list;
 			delete (Declarator*)trans_stack.top();
 			trans_stack.pop();

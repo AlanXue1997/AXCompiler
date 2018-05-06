@@ -50,6 +50,10 @@ public:
 		temp = 0;
 	}
 
+	std::map<std::string, VARIABLE>* get_dict() {
+		return &dict;
+	}
+
 	//Generate a new temp variable
 	std::string new_temp(std::string type) {
 		if (type == "int") {
@@ -124,10 +128,10 @@ public:
 };
 
 struct FUNCTION {
-	std::string name;
 	VARIABLE var;
-	int addr;
 	VARIABLE_LIST * parameter_variables;
+	VARIABLE_LIST * local_variable_list;
+	QUADRUPLE_LIST* quadruple_list;
 };
 
 struct Identifier {
@@ -213,6 +217,7 @@ struct CompoundStatement {
 };
 
 struct FunctionDefinition {
+	std::string name;
 	FUNCTION func;
 };
 
@@ -335,3 +340,4 @@ void output_global_variables();
 void output_local_variables();
 void output_all_quadruple();
 void output_int_list();
+void output_func_list();
