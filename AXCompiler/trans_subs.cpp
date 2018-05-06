@@ -16,18 +16,6 @@ void init_trans_subs() {
 	int_list = new INT_LIST;
 }
 
-FUNCTION_LIST* get_function_list() {
-	return function_list;
-}
-
-VARIABLE_LIST *get_global_variables() {
-	return global_variables;
-}
-
-INT_LIST* get_int_list() {
-	return int_list;
-}
-
 void output_global_variables() {
 	(*global_variables) << std::cout << std::endl;
 }

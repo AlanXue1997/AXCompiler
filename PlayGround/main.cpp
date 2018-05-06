@@ -1,13 +1,18 @@
 #include<iostream>
 int a[10][10];
 int f(int x) {
-	int b;
-	b = x;
-	std::cout << (x+b) << std::endl;
+	std::cout << x << std::endl;
 	return x;
 }
 
 int main() {
-	f(5);
+	int a;
+	scanf_s("%d", &a);
+	if (a > 100) {
+		printf("yes");
+	}
+	else {
+		printf("no");
+	}
 	return 0;
 }

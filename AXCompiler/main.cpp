@@ -35,8 +35,6 @@ int main(int argc, char* argv[]) {
 	output_int_list();
 	output_func_list();
 
-	generate_code(get_global_variables(), get_int_list(), get_function_list());
-
 	system("pause");
 	return 0;
 }
