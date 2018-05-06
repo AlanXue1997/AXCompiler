@@ -8,6 +8,7 @@ INT_LIST *const_int_list;
 VARIABLE_LIST* global_variable_list;
 VARIABLE_LIST* local_variable_list;
 FUNCTION_LIST *func_list;
+ASM_VARIABLE_LIST *asm_variable_list;
 
 void init_code_generator() {
 
@@ -41,30 +42,19 @@ void writeData() {
 				}
 				fout << n << std::setw(wid) << std::left << " DUP(0)";
 			}
+			else {
+				fout << std::setw(wid) << std::left << "0";
+			}
 			fout << std::endl;
 		}
 		fout << std::endl;
 	}
 }
 
-void modify_name(std::string &name) {
-	if (global_variable_list != NULL && global_variable_list->find(name) != NULL) {
-		name = "g_" + name;
-	}
-	if (local_variable_list != NULL && local_variable_list->find(name) != NULL) {
-		if (name[0] == '@') {
-			name[0] = 't';
-		}
-		else {
-			name = "l_" + name;
-		}
-	}
-}
-
 ASM_VARIABLE_LIST* convertVariable(VARIABLE_LIST* variable_list) {
 	ASM_VARIABLE_LIST* asm_variable_list = new ASM_VARIABLE_LIST;
 	auto dict = variable_list->get_dict();
-	int n = 0;
+	int n = 8;
 	for (auto it = dict->cbegin(); it != dict->cend(); ++it) {
 		std::string name = it->first;
 		int size = it->second.size;
@@ -82,11 +72,20 @@ ASM_VARIABLE_LIST* convertVariable(VARIABLE_LIST* variable_list) {
 				p = p->next;
 			}
 		}
-		asm_variable_list->insert(std::pair<std::string, ASM_VARIABLE>(name, {type,size}));
+		asm_variable_list->insert(std::pair<std::string, ASM_VARIABLE>(name, {type,n}));
 		n += size;
 	}
 	asm_variable_list->insert(std::pair<std::string, ASM_VARIABLE>("@ALL", { "",n }));
 	return asm_variable_list;
+}
+
+void modify_name(std::string &name) {
+	if (global_variable_list != NULL && global_variable_list->find(name) != NULL) {
+		name = "g_" + name;
+	}
+	if (local_variable_list != NULL && local_variable_list->find(name) != NULL) {
+		name = "[EBP-" + std::to_string(asm_variable_list->at(name).offset)+"]";
+	}
 }
 
 void inst2(std::string instructor, std::string destination, std::string source) {
@@ -100,12 +99,27 @@ void inst2(std::string instructor, std::string destination, std::string source) 
 	fout << std::endl;
 }
 
+void writeInstructor(QUADRUPLE *quadruple) {
+	if (quadruple->op == "+") {
+		inst2("MOV", "EAX", quadruple->arg1);
+		inst2("ADD", "EAX", quadruple->arg2);
+		inst2("MOV", quadruple->result, "EAX");
+	}
+	else if (quadruple->op == "=") {
+		inst2("MOV", "EAX", quadruple->arg1);
+		inst2("MOV", quadruple->result, "EAX");
+	}
+	else {
+		fout << "\t(!)Undefined operator " << quadruple->op << std::endl;
+	}
+}
+
 void writeProc() {
 	fout << ".CODE" << std::endl;
 	for (auto it = func_list->cbegin(); it != func_list->cend(); ++it) {
 		std::string name = it->first;
 		//!!cannot get local variable correctly
-		//local_variable_list = it->second.local_variable_list;
+		local_variable_list = it->second.local_variable_list;
 		//it->second.parameter_variables
 		std::string return_type = it->second.var.type;
 		QUADRUPLE_LIST *quadruple_list = it->second.quadruple_list;
@@ -115,20 +129,16 @@ void writeProc() {
 		else {
 			fout << "(!)Undefined Function name type" << std::endl;
 		}
-
-		for (auto quadruple = quadruple_list->cbegin(); quadruple != quadruple_list->cend(); ++quadruple) {
-			if (quadruple->op == "+") {
-				inst2("MOV", "EAX", quadruple->arg1);
-				inst2("ADD", "EAX", quadruple->arg2);
-				inst2("MOV", quadruple->result, "EAX");
-			}
-			else if (quadruple->op == "=") {
-				inst2("MOV", "EAX", quadruple->arg1);
-				inst2("MOV", quadruple->result, "EAX");
-			}
-			else {
-				fout << "\t(!)Undefined operator " << quadruple->op << std::endl;
-			}
+		asm_variable_list = convertVariable(local_variable_list);
+		if (asm_variable_list->at("@ALL").offset > 0) {
+			fout << "\t";
+			fout << std::setw(INSTRUCTOR_WIDTH) << std::left << "SUB";
+			fout << std::setw(INSTRUCTOR_WIDTH) << std::left << "EBP,";
+			fout << std::setw(INSTRUCTOR_WIDTH) << std::left << asm_variable_list->at("@ALL").offset;
+			fout << std::endl;
+		}
+		for (auto quadruple = quadruple_list->begin(); quadruple != quadruple_list->end(); ++quadruple) {
+			writeInstructor(&*quadruple);//Magical converting...
 		}
 
 		fout << name << " ENDP" << std::endl;

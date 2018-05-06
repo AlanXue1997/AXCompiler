@@ -1,11 +1,8 @@
 int b;
 int main(){
-	int a;
-	if(2){
-		a=4;
-	}else{
-		a=5;
-	}
+	int c;
+	c = 0;
+	b = 1+c;
 }
 /*
 int a[10][10];

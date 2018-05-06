@@ -212,7 +212,7 @@ struct ParameterTypeList {
 };
 
 struct CompoundStatement {
-	VARIABLE_LIST *variable_list;
+	VARIABLE_LIST *variable_list = NULL;
 	QUADRUPLE_LIST *quadruple_list;
 };
 
@@ -341,3 +341,7 @@ void output_local_variables();
 void output_all_quadruple();
 void output_int_list();
 void output_func_list();
+
+VARIABLE_LIST *get_global_variables();
+INT_LIST *get_int_list();
+FUNCTION_LIST *get_function_list();

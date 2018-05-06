@@ -16,6 +16,16 @@ void init_trans_subs() {
 	int_list = new INT_LIST;
 }
 
+VARIABLE_LIST *get_global_variables() {
+	return global_variables;
+}
+INT_LIST *get_int_list() {
+	return int_list;
+}
+FUNCTION_LIST *get_function_list() {
+	return function_list;
+}
+
 void output_global_variables() {
 	(*global_variables) << std::cout << std::endl;
 }
@@ -1051,7 +1061,20 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 			delete (Statement*)trans_stack.top();
 			trans_stack.pop();
 
-			trans_stack.push(statementList);
+			trans_stack.push((void*)statementList);
+		}
+		else if (sub_index == 1) {
+			StatementList *statementList = new StatementList;
+			QUADRUPLE_LIST *quadruple_list_r = ((Statement*)trans_stack.top())->quadruple_list;
+			delete (Statement*)trans_stack.top();
+			trans_stack.pop();
+
+			QUADRUPLE_LIST *quadruple_list_l = ((StatementList*)trans_stack.top())->quadruple_list;
+			delete (StatementList*)trans_stack.top();
+			trans_stack.pop();
+			
+			statementList->quadruple_list = new_quadruple_list(quadruple_list_l, quadruple_list_r);
+			trans_stack.push((void*)statementList);
 		}
 		else {
 			UPEXPECTED_PRODUCTION
