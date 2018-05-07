@@ -312,6 +312,7 @@ struct Expression {
 };
 
 struct ExpressionStatement {
+	std::string vari_or_cons_name;
 	QUADRUPLE_LIST *quadruple_list = NULL;
 };
 
@@ -329,6 +330,14 @@ struct ConstantExpression {
 };
 
 struct SelectionStatement {
+	QUADRUPLE_LIST *quadruple_list = NULL;
+};
+
+struct JumpStatement {
+	QUADRUPLE_LIST *quadruple_list = NULL;
+};
+
+struct IterationStatement {
 	QUADRUPLE_LIST *quadruple_list = NULL;
 };
 

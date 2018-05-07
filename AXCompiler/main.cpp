@@ -29,11 +29,11 @@ int main(int argc, char* argv[]) {
 	if (words->code == END || k==ACC)printf("ACCEPTED!!!\n");
 	else printf("ERROR");
 	
-	output_global_variables();
-	output_local_variables();
+	//output_global_variables();
+	//output_local_variables();
 	output_all_quadruple();
-	output_int_list();
-	output_func_list();
+	//output_int_list();
+	//output_func_list();
 
 	generate_code(get_global_variables(), get_int_list(), get_function_list());
 	system("pause");

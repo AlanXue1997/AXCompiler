@@ -76,9 +76,24 @@ void output_func_list() {
 	}
 }
 
+std::string new_temp_variable(std::string type) {
+	if (local_variables == NULL) local_variables = new VARIABLE_LIST;
+	return local_variables->new_temp(type);
+}
+
+int new_local_variable(std::string name, VARIABLE var) {
+	if (local_variables == NULL) local_variables = new VARIABLE_LIST;
+	return local_variables->insert(name, var);
+}
+
 std::string new_if_mark() {
 	static int n = 0;
 	return "IF" + std::to_string(n++);
+}
+
+std::string new_for_mark() {
+	static int n = 0;
+	return "FOR" + std::to_string(n++);
 }
 
 void new_const_int(const std::string num) {
@@ -99,7 +114,7 @@ QUADRUPLE new_quadruple(std::string arg1, std::string op, std::string arg2) {
 	}
 	else {
 		if (local_variables == NULL) local_variables = new VARIABLE_LIST;
-		quadruple.result = local_variables->new_temp("int");
+		quadruple.result = new_temp_variable("int");
 	}
 	return quadruple;
 }
@@ -286,7 +301,7 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 		if (sub_index == 0) {
 			DeclarationList *declarationList = new DeclarationList;
 			declarationList->variable_list = new VARIABLE_LIST;
-			if (!declarationList->variable_list->insert(((Declaration*)trans_stack.top())->name, ((Declaration*)trans_stack.top())->var)) {
+			if (!new_local_variable(((Declaration*)trans_stack.top())->name, ((Declaration*)trans_stack.top())->var)) {
 				printf("[Wrong] variable \"%s\" exists", ((Declaration*)trans_stack.top())->name.c_str());
 				return 1;
 			}
@@ -548,6 +563,7 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 		if (sub_index == 1) {
 			CompoundStatement *compoundStatement = new CompoundStatement;
 			compoundStatement->quadruple_list = ((StatementList*)trans_stack.top())->quadruple_list;
+			compoundStatement->variable_list = local_variables;
 			delete (StatementList*)trans_stack.top();
 			trans_stack.pop();
 
@@ -598,6 +614,7 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 			trans_stack.pop();
 			
 			trans_stack.push((void*)functionDefinition);
+			local_variables = NULL;
 		}
 		else {
 			UPEXPECTED_PRODUCTION
@@ -923,12 +940,12 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 				if (p_use != NULL || p_define != NULL) {
 					std::cout << "[Wrong]\n\tDimension of array " << unaryExpression->vari_or_cons_name << " doesn't match" << std::endl;
 				}
-				int size = variable->size;
-				new_const_int(size);
-				QUADRUPLE quadruple_result = new_quadruple(std::to_string(size), "*", last_variable);
+				//int size = variable->size;
+				//new_const_int(size);
+				//QUADRUPLE quadruple_result = new_quadruple(std::to_string(size), "*", last_variable);
 
-				unaryExpression->quadruple_list->push_back(quadruple_result);
-				unaryExpression->vari_or_cons_name += "+" + quadruple_result.result;
+				//unaryExpression->quadruple_list->push_back(quadruple_result);
+				unaryExpression->vari_or_cons_name += "%" + last_variable;//quadruple_result.result;
 			}
 			delete (PostfixExpression*)trans_stack.top();
 			trans_stack.pop();
@@ -1016,6 +1033,7 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 		if (sub_index == 1) {
 			ExpressionStatement *expressionStatement = new ExpressionStatement;
 			expressionStatement->quadruple_list = ((Expression*)trans_stack.top())->quadruple_list;
+			expressionStatement->vari_or_cons_name = ((Expression*)trans_stack.top())->vari_or_cons_name;
 			delete (Expression*)trans_stack.top();
 			trans_stack.pop();
 
@@ -1046,6 +1064,14 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 			Statement *statement = new Statement;
 			statement->quadruple_list = ((SelectionStatement*)trans_stack.top())->quadruple_list;
 			delete (SelectionStatement*)trans_stack.top();
+			trans_stack.pop();
+
+			trans_stack.push((void*)statement);
+		}
+		else if (sub_index == 4) {
+			Statement *statement = new Statement;
+			statement->quadruple_list = ((IterationStatement*)trans_stack.top())->quadruple_list;
+			delete (IterationStatement*)trans_stack.top();
 			trans_stack.pop();
 
 			trans_stack.push((void*)statement);
@@ -1143,6 +1169,53 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 			UPEXPECTED_PRODUCTION
 		}
 	}
+	else if(i2n[L] == "iteration_statement"){
+		if (sub_index == 3) {
+			IterationStatement *iterationStatement = new IterationStatement;
+			
+			QUADRUPLE_LIST *quadruple_list_4 = ((Statement*)trans_stack.top())->quadruple_list;
+			delete (Statement*)trans_stack.top();
+			trans_stack.pop();
+
+			QUADRUPLE_LIST *quadruple_list_3 = ((Expression*)trans_stack.top())->quadruple_list;
+			delete (Expression*)trans_stack.top();
+			trans_stack.pop();
+
+			QUADRUPLE_LIST *quadruple_list_2 = ((ExpressionStatement*)trans_stack.top())->quadruple_list;
+			std::string vari_or_cons_name_2 = ((ExpressionStatement*)trans_stack.top())->vari_or_cons_name;
+			delete (ExpressionStatement*)trans_stack.top();
+			trans_stack.pop();
+
+			QUADRUPLE_LIST *quadruple_list_1 = ((ExpressionStatement*)trans_stack.top())->quadruple_list;
+			delete (ExpressionStatement*)trans_stack.top();
+			trans_stack.pop();
+
+			std::string mark = new_for_mark();
+			std::string mark_begin = mark + "BEGIN";
+			std::string mark_continue = mark + "CONTINUE";
+			std::string mark_end = mark + "END";
+			quadruple_list_1 = new_quadruple_list(quadruple_list_1, NULL, new_quadruple("", "", "", mark_begin));
+			quadruple_list_2 = new_quadruple_list(quadruple_list_1, quadruple_list_2, new_quadruple(vari_or_cons_name_2, "JZ", mark_end));
+			quadruple_list_4 = new_quadruple_list(quadruple_list_2, quadruple_list_4, new_quadruple("", "", "", mark_continue));
+			quadruple_list_3 = new_quadruple_list(quadruple_list_4, quadruple_list_3, new_quadruple("", "JMP", mark_begin));
+
+			iterationStatement->quadruple_list = new_quadruple_list(quadruple_list_3, NULL, new_quadruple("", "", "", mark_end));
+			trans_stack.push((void*)iterationStatement);
+		}
+		else {
+			UPEXPECTED_PRODUCTION
+		}
+	}
+	/*
+	else if (i2n[L] == "jump_statement") {
+		if (sub_index == 4) {
+			JumpStatement *jumpStatement = new JumpStatement;
+
+		}
+		else {
+			UPEXPECTED_PRODUCTION
+		}
+	}*/
 	else {
 		UPEXPECTED_PRODUCTION
 		//printf("[Wrong] productions of %s not defined\n", i2n[L]); return 1;
