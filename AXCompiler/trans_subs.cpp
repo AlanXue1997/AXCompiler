@@ -80,11 +80,11 @@ std::string new_temp_variable(std::string type) {
 	if (local_variables == NULL) local_variables = new VARIABLE_LIST;
 	return local_variables->new_temp(type);
 }
-
+/*
 int new_local_variable(std::string name, VARIABLE var) {
 	if (local_variables == NULL) local_variables = new VARIABLE_LIST;
 	return local_variables->insert(name, var);
-}
+}*/
 
 std::string new_if_mark() {
 	static int n = 0;
@@ -301,7 +301,7 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 		if (sub_index == 0) {
 			DeclarationList *declarationList = new DeclarationList;
 			declarationList->variable_list = new VARIABLE_LIST;
-			if (!new_local_variable(((Declaration*)trans_stack.top())->name, ((Declaration*)trans_stack.top())->var)) {
+			if (!declarationList->variable_list->insert(((Declaration*)trans_stack.top())->name, ((Declaration*)trans_stack.top())->var)) {
 				printf("[Wrong] variable \"%s\" exists", ((Declaration*)trans_stack.top())->name.c_str());
 				return 1;
 			}

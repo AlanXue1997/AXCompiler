@@ -16,7 +16,7 @@ void init_code_generator() {
 
 std::string new_common_label() {
 	static int n;
-	return "A" + std::to_string(n);
+	return "A" + std::to_string(n++);
 }
 
 void writeLabel(std::string label) {
@@ -170,7 +170,7 @@ void writeInstructor(QUADRUPLE *quadruple) {
 		inst2("MOV", "EAX", quadruple->arg1);
 		inst2("CMP", "EAX", quadruple->arg2);
 		std::string label = new_common_label();
-		inst1("JB", label);
+		inst1("JL", label);
 		inst2("MOV", "EAX", "0");
 		inst2("MOV", quadruple->result, "EAX");
 		writeLabel(label);

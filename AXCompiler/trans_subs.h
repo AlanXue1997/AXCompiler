@@ -19,6 +19,12 @@
 #define INT_LIST std::map<std::string, int>
 #define QUADRUPLE_LIST std::list<QUADRUPLE>
 
+struct PARAMETER_LINK {
+	std::string name;
+	VARIABLE var;
+	PARAMETER_LINK* next;
+};
+
 struct ARRAY_LINK {
 	std::string vari_or_cons_name;
 	ARRAY_LINK* next;
