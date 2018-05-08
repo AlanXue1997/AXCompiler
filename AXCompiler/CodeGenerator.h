@@ -1,10 +1,12 @@
 #pragma once
 
 #include <fstream>
+#include <stack>
 
 #include "trans_subs.h"
 
 #define ASM_VARIABLE_LIST std::map<std::string, ASM_VARIABLE>
+#define CALL_STACK std::stack<std::string>
 
 struct ASM_VARIABLE {
 	std::string type;

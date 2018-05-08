@@ -2,6 +2,8 @@
 
 #define INSTRUCTOR_WIDTH 13
 
+#define TAB(k) std::setw(k) << std::left
+
 std::ofstream fout("generatedCode.asm");
 
 INT_LIST *const_int_list;
@@ -36,12 +38,12 @@ void writeData() {
 		auto list = global_variable_list->get_dict();
 		for (auto it = list->cbegin(); it != list->cend(); it++) {
 			fout << "\t";
-			fout << std::setw(wid) << std::left << ("g_" + it->first);
+			fout << TAB(wid) << ("g_" + it->first);
 			if (it->second.type == "int") {
-				fout << std::setw(wid) << std::left << "SDWORD";
+				fout << TAB(wid) << "SDWORD";
 			}
 			else {
-				fout << std::setw(wid) << std::left << "(!)UNKNOW_TYPE: " << it->second.type;
+				fout << TAB(wid) << "(!)UNKNOW_TYPE: " << it->second.type;
 			}
 			if (it->second.array) {
 				auto p = (ARRAY_LINK*)it->second.pointer;
@@ -50,10 +52,10 @@ void writeData() {
 					n *= const_int_list->at(p->vari_or_cons_name);
 					p = p->next;
 				}
-				fout << n << std::setw(wid) << std::left << " DUP(0)";
+				fout << n << TAB(wid) << " DUP(0)";
 			}
 			else {
-				fout << std::setw(wid) << std::left << "0";
+				fout << TAB(wid) << "0";
 			}
 			fout << std::endl;
 		}
@@ -98,9 +100,9 @@ void inst2(std::string instructor, std::string destination, std::string source) 
 	modify_name(destination);
 	modify_name(source);
 	fout << "\t";
-	fout << std::setw(wid) << std::left << instructor;
-	fout << std::setw(wid) << std::left << (destination+",");
-	fout << std::setw(wid) << std::left << source;
+	fout << TAB(wid) << instructor;
+	fout << TAB(wid) << (destination+",");
+	fout << TAB(wid) << source;
 	fout << std::endl;
 }
 
@@ -108,8 +110,8 @@ void inst1(std::string instructor, std::string source) {
 	int wid = INSTRUCTOR_WIDTH;
 	modify_name(source); 
 	fout << "\t";
-	fout << std::setw(wid) << std::left << instructor;
-	fout << std::setw(wid) << std::left << source;
+	fout << TAB(wid) << instructor;
+	fout << TAB(wid) << source;
 	fout << std::endl;
 }
 
@@ -138,6 +140,7 @@ void modify_name(std::string &name) {
 }
 
 void writeInstructor(QUADRUPLE *quadruple) {
+	static CALL_STACK call_stack;
 	if (quadruple->mark != "") {
 		fout << quadruple->mark << ":" << std::endl;;
 	}
@@ -174,6 +177,22 @@ void writeInstructor(QUADRUPLE *quadruple) {
 		inst2("MOV", "EAX", "0");
 		inst2("MOV", quadruple->result, "EAX");
 		writeLabel(label);
+	}
+	else if (quadruple->op == "MOV") {
+		inst2("MOV", quadruple->arg1, quadruple->arg2);
+	}
+	else if (quadruple->op == "CALL_PUSH") {
+		call_stack.push(quadruple->arg1);
+	}
+	else if (quadruple->op == "INVOKE") {
+		fout << "\t";
+		fout << TAB(INSTRUCTOR_WIDTH) << "INVOKE";
+		fout << quadruple->arg1;
+		while (!call_stack.empty()) {
+			fout << ", " << call_stack.top();
+			call_stack.pop();
+		}
+		fout << std::endl;
 	}
 	else if (quadruple->op == "") {
 
@@ -227,9 +246,9 @@ void writeProc() {
 		asm_variable_list = convertVariable(local_variable_list);
 		if (asm_variable_list->at("@ALL").offset > 0) {
 			fout << "\t";
-			fout << std::setw(INSTRUCTOR_WIDTH) << std::left << "SUB";
-			fout << std::setw(INSTRUCTOR_WIDTH) << std::left << "EBP,";
-			fout << std::setw(INSTRUCTOR_WIDTH) << std::left << asm_variable_list->at("@ALL").offset;
+			fout << TAB(INSTRUCTOR_WIDTH) << "SUB";
+			fout << TAB(INSTRUCTOR_WIDTH) << "EBP,";
+			fout << TAB(INSTRUCTOR_WIDTH) << asm_variable_list->at("@ALL").offset;
 			fout << std::endl;
 		}
 		for (auto quadruple = quadruple_list->begin(); quadruple != quadruple_list->end(); ++quadruple) {
@@ -237,9 +256,9 @@ void writeProc() {
 		}
 
 		fout << "\t";
-		fout << std::setw(INSTRUCTOR_WIDTH) << std::left << "INVOKE";
-		fout << std::setw(INSTRUCTOR_WIDTH) << std::left << "ExitProcess,";
-		fout << std::setw(INSTRUCTOR_WIDTH) << std::left << "0";
+		fout << TAB(INSTRUCTOR_WIDTH) << "INVOKE";
+		fout << TAB(INSTRUCTOR_WIDTH) << "ExitProcess,";
+		fout << TAB(INSTRUCTOR_WIDTH) << "0";
 		fout << std::endl;
 		fout << name << " ENDP" << std::endl;
 		fout << std::endl;

@@ -130,7 +130,7 @@ public:
 struct PARAMETER_LINK {
 	std::string name;
 	VARIABLE var;
-	PARAMETER_LINK* next;
+	PARAMETER_LINK* next=NULL;
 };
 
 struct FUNCTION {
@@ -351,6 +351,11 @@ struct JumpStatement {
 
 struct IterationStatement {
 	QUADRUPLE_LIST *quadruple_list = NULL;
+};
+
+struct ArgumentExpressionList {
+	QUADRUPLE_LIST *quadruple_list = NULL;
+	PARAMETER_LINK* parameter_link;
 };
 
 void init_trans_subs();

@@ -80,11 +80,11 @@ std::string new_temp_variable(std::string type) {
 	if (local_variables == NULL) local_variables = new VARIABLE_LIST;
 	return local_variables->new_temp(type);
 }
-/*
+
 int new_local_variable(std::string name, VARIABLE var) {
 	if (local_variables == NULL) local_variables = new VARIABLE_LIST;
 	return local_variables->insert(name, var);
-}*/
+}
 
 std::string new_if_mark() {
 	static int n = 0;
@@ -109,13 +109,14 @@ QUADRUPLE new_quadruple(std::string arg1, std::string op, std::string arg2) {
 	quadruple.op = op;
 	quadruple.arg1 = arg1;
 	quadruple.arg2 = arg2;
-	if (op == "" || op[0] == 'J') {
-		quadruple.result = "";
-	}
-	else {
-		if (local_variables == NULL) local_variables = new VARIABLE_LIST;
-		quadruple.result = new_temp_variable("int");
-	}
+	quadruple.result = "";
+	return quadruple;
+}
+
+QUADRUPLE new_quadruple_with_result(std::string arg1, std::string op, std::string arg2) {
+	QUADRUPLE quadruple = new_quadruple(arg1, op, arg2);
+	if (local_variables == NULL) local_variables = new VARIABLE_LIST;
+	quadruple.result = new_temp_variable("int");
 	return quadruple;
 }
 
@@ -147,6 +148,8 @@ QUADRUPLE_LIST* new_quadruple_list(QUADRUPLE_LIST* quadruple_list_l, QUADRUPLE_L
 	return quadruple_list;
 }
 
+//Highly recommend to use this function even if you just want to add a single quadruple,
+//Because this helps prevent memory leaks and handles NULL pointer automatically.
 QUADRUPLE_LIST* new_quadruple_list(QUADRUPLE_LIST* quadruple_list_l, QUADRUPLE_LIST* quadruple_list_r, const QUADRUPLE quadruple) {
 	QUADRUPLE_LIST* quadruple_list;
 	quadruple_list = new_quadruple_list(quadruple_list_l, quadruple_list_r);
@@ -789,7 +792,7 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 			QUADRUPLE_LIST *quadruple_list_l = ((RelationalExpression*)trans_stack.top())->quadruple_list;
 			std::string arg1 = ((RelationalExpression*)trans_stack.top())->vari_or_cons_name;
 			if (local_variables == NULL)local_variables = new VARIABLE_LIST;
-			QUADRUPLE quadruple = new_quadruple(arg1, op, arg2);
+			QUADRUPLE quadruple = new_quadruple_with_result(arg1, op, arg2);
 			relationalExpression->vari_or_cons_name = quadruple.result;
 			delete (MultiplicativeExpression*)trans_stack.top();
 			trans_stack.pop();
@@ -836,7 +839,7 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 			QUADRUPLE_LIST *quadruple_list_l = ((AdditiveExpression*)trans_stack.top())->quadruple_list;
 			std::string arg1 = ((AdditiveExpression*)trans_stack.top())->vari_or_cons_name;
 			if (local_variables == NULL)local_variables = new VARIABLE_LIST;
-			QUADRUPLE quadruple = new_quadruple(arg1, op, arg2);
+			QUADRUPLE quadruple = new_quadruple_with_result(arg1, op, arg2);
 			additiveExpression->vari_or_cons_name = quadruple.result;
 			delete (AdditiveExpression*)trans_stack.top();
 			trans_stack.pop();
@@ -880,7 +883,7 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 			QUADRUPLE_LIST *quadruple_list_l = ((MultiplicativeExpression*)trans_stack.top())->quadruple_list;
 			std::string arg1 = ((MultiplicativeExpression*)trans_stack.top())->vari_or_cons_name;
 			if (local_variables == NULL)local_variables = new VARIABLE_LIST;
-			QUADRUPLE quadruple = new_quadruple(arg1, op, arg2);
+			QUADRUPLE quadruple = new_quadruple_with_result(arg1, op, arg2);
 			multiplicativeExpression->vari_or_cons_name = quadruple.result;
 			delete (MultiplicativeExpression*)trans_stack.top();
 			trans_stack.pop();
@@ -931,10 +934,10 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 				while (p_use != NULL && p_define != NULL) {
 					new_const_int(multi);
 
-					QUADRUPLE quadruple1 = new_quadruple(std::to_string(multi), "*", p_use->vari_or_cons_name);
+					QUADRUPLE quadruple1 = new_quadruple_with_result(std::to_string(multi), "*", p_use->vari_or_cons_name);
 					unaryExpression->quadruple_list->push_back(quadruple1);
 
-					QUADRUPLE quadruple2 = new_quadruple(last_variable, "+", quadruple1.result);
+					QUADRUPLE quadruple2 = new_quadruple_with_result(last_variable, "+", quadruple1.result);
 					unaryExpression->quadruple_list->push_back(quadruple2);
 					
 					last_variable = quadruple2.result;
@@ -946,7 +949,7 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 				}
 				//int size = variable->size;
 				//new_const_int(size);
-				//QUADRUPLE quadruple_result = new_quadruple(std::to_string(size), "*", last_variable);
+				//QUADRUPLE quadruple_result = new_quadruple_with_result(std::to_string(size), "*", last_variable);
 
 				//unaryExpression->quadruple_list->push_back(quadruple_result);
 				unaryExpression->vari_or_cons_name += "%" + last_variable;//quadruple_result.result;
@@ -963,6 +966,7 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 	}
 	else if (i2n[L] == "postfix_expression") {
 		if (sub_index == 0) {
+			//primary_expression
 			PostfixExpression *postfixExpression = new PostfixExpression;
 			postfixExpression->vari_or_cons_name = ((PrimaryExpression*)trans_stack.top())->vari_or_cons_name;
 			delete (PrimaryExpression*)trans_stack.top();
@@ -970,6 +974,7 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 			trans_stack.push((void*)postfixExpression);
 		}
 		else if (sub_index == 1) {
+			//postfix_expression '[' expression ']'
 			PostfixExpression *postfixExpression = new PostfixExpression;
 			postfixExpression->array_link = new ARRAY_LINK;
 			postfixExpression->array_link->vari_or_cons_name = ((Expression*)trans_stack.top())->vari_or_cons_name;
@@ -985,6 +990,40 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 
 			postfixExpression->quadruple_list = new_quadruple_list(quadruple_list_l, quadruple_list_r);
 			
+			trans_stack.push((void*)postfixExpression);
+		}
+		else if (sub_index == 3) {
+			//postfix_expression '(' argument_expression_list ')'
+			PostfixExpression *postfixExpression = new PostfixExpression;
+			
+			QUADRUPLE_LIST *quadruple_list_r = ((ArgumentExpressionList*)trans_stack.top())->quadruple_list;
+			PARAMETER_LINK *p = ((ArgumentExpressionList*)trans_stack.top())->parameter_link;
+			delete (ArgumentExpressionList*)trans_stack.top();
+			trans_stack.pop();
+
+			QUADRUPLE_LIST *quadruple_list_l = ((PostfixExpression*)trans_stack.top())->quadruple_list;
+			std::string func_name = ((PostfixExpression*)trans_stack.top())->vari_or_cons_name;
+			delete (PostfixExpression*)trans_stack.top();
+			trans_stack.pop();
+
+			//To be honest, I'm not sure if the order of these two code block is right
+			QUADRUPLE_LIST *quadruple_list = new_quadruple_list(quadruple_list_r, quadruple_list_l);
+
+			while (p != NULL) {
+				quadruple_list = new_quadruple_list(quadruple_list, NULL, new_quadruple(p->name,"CALL_PUSH",""));
+				p = p->next;
+			}
+			quadruple_list = new_quadruple_list(quadruple_list, NULL, new_quadruple(func_name, "INVOKE", ""));
+			//Actually, you should get the return type in func_list
+			//I will do it later
+			std::string return_value = new_temp_variable("int");
+			//Maybe delivering EAX directly also works
+			quadruple_list = new_quadruple_list(quadruple_list, NULL, new_quadruple(return_value, "MOV", "EAX"));
+			postfixExpression->quadruple_list = quadruple_list;
+			//Not sure if it is useful, just for safety(Lazy)
+			postfixExpression->array_link = NULL;
+			postfixExpression->vari_or_cons_name = return_value;
+
 			trans_stack.push((void*)postfixExpression);
 		}
 		else {
@@ -1205,6 +1244,42 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 
 			iterationStatement->quadruple_list = new_quadruple_list(quadruple_list_3, NULL, new_quadruple("", "", "", mark_end));
 			trans_stack.push((void*)iterationStatement);
+		}
+		else {
+			UPEXPECTED_PRODUCTION
+		}
+	}
+	else if (i2n[L] == "argument_expression_list") {
+		if (sub_index == 0) {
+			//assignment_expression
+			ArgumentExpressionList *argumentExpressionList = new ArgumentExpressionList;
+			argumentExpressionList->parameter_link = new PARAMETER_LINK;
+			
+			argumentExpressionList->quadruple_list = ((AssignmentExpression*)trans_stack.top())->quadruple_list;
+			argumentExpressionList->parameter_link->name = ((AssignmentExpression*)trans_stack.top())->vari_or_cons_name;
+			argumentExpressionList->parameter_link->next = NULL;
+			delete (AssignmentExpression*)trans_stack.top();
+			trans_stack.pop();
+
+			trans_stack.push((void*)argumentExpressionList);
+		}
+		else if (sub_index == 1) {
+			//argument_expression_list ',' assignment_expression
+			ArgumentExpressionList *argumentExpressionList = new ArgumentExpressionList;
+			argumentExpressionList->parameter_link = new PARAMETER_LINK;
+
+			QUADRUPLE_LIST *quadruple_list_r = ((AssignmentExpression*)trans_stack.top())->quadruple_list;
+			argumentExpressionList->parameter_link->name = ((AssignmentExpression*)trans_stack.top())->vari_or_cons_name;
+			delete (AssignmentExpression*)trans_stack.top();
+			trans_stack.pop();
+
+			QUADRUPLE_LIST *quadruple_list_l = ((ArgumentExpressionList*)trans_stack.top())->quadruple_list;
+			argumentExpressionList->parameter_link->next = ((ArgumentExpressionList*)trans_stack.top())->parameter_link;
+			delete (ArgumentExpressionList*)trans_stack.top();
+			trans_stack.pop();
+
+			argumentExpressionList->quadruple_list = new_quadruple_list(quadruple_list_r, quadruple_list_l);
+			trans_stack.push((void*)argumentExpressionList);
 		}
 		else {
 			UPEXPECTED_PRODUCTION
