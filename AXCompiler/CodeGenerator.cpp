@@ -196,7 +196,33 @@ void writeProc() {
 			fout << name << " PROC" << std::endl;
 		}
 		else {
-			fout << "(!)Undefined Function name type" << std::endl;
+			//fout << "(!)Undefined Function name type" << std::endl;
+			fout << name << " PROC C USES EBX ";
+			PARAMETER_LINK *p = it->second.parameter_link;
+			//used to write "," between parameters
+			bool more_than_one = false;
+			while (p != NULL) {
+				if (more_than_one) {
+					fout << ", ";
+				}
+				else {
+					more_than_one = true;
+				}
+				if (p->var.array) {
+					fout << "(!)Not support array in parameters ";
+				}
+				else {
+					if (p->var.type == "int") {
+						fout << p->name << ":SDWORD";
+					}
+					else {
+						fout << "(!)Unsupported type: " << p->var.type << "in parameters ";
+					}
+				}
+
+				p = p->next;
+			}
+			fout << std::endl;
 		}
 		asm_variable_list = convertVariable(local_variable_list);
 		if (asm_variable_list->at("@ALL").offset > 0) {

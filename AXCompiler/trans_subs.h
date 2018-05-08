@@ -19,12 +19,6 @@
 #define INT_LIST std::map<std::string, int>
 #define QUADRUPLE_LIST std::list<QUADRUPLE>
 
-struct PARAMETER_LINK {
-	std::string name;
-	VARIABLE var;
-	PARAMETER_LINK* next;
-};
-
 struct ARRAY_LINK {
 	std::string vari_or_cons_name;
 	ARRAY_LINK* next;
@@ -133,9 +127,16 @@ public:
 	}
 };
 
+struct PARAMETER_LINK {
+	std::string name;
+	VARIABLE var;
+	PARAMETER_LINK* next;
+};
+
 struct FUNCTION {
 	VARIABLE var;
-	VARIABLE_LIST * parameter_variables;
+	//VARIABLE_LIST * parameter_variables;
+	PARAMETER_LINK* parameter_link;
 	VARIABLE_LIST * local_variable_list;
 	QUADRUPLE_LIST* quadruple_list;
 };
@@ -167,13 +168,16 @@ struct Declaration {
 
 struct DirectDeclarator {
 	std::string name;
+	//I forget if it is indeed useful, but due to history problem, personally not recommend to delete it.
 	VARIABLE_LIST *variable_list;
+	PARAMETER_LINK *parameter_link=NULL;
 	ARRAY_LINK* array_link= NULL;
 };
 
 struct Declarator {
 	std::string name;
 	VARIABLE_LIST *variable_list;
+	PARAMETER_LINK *parameter_link;
 	ARRAY_LINK* array_link = NULL;
 };
 
@@ -210,11 +214,13 @@ struct ParameterDeclaration {
 };
 
 struct ParameterList {
-	VARIABLE_LIST *variable_list;
+	//VARIABLE_LIST *variable_list;
+	PARAMETER_LINK *parameter_link;
 };
 
 struct ParameterTypeList {
-	VARIABLE_LIST *variable_list;
+	//VARIABLE_LIST *variable_list;
+	PARAMETER_LINK *parameter_link;
 };
 
 struct CompoundStatement {

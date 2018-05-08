@@ -4,7 +4,7 @@ std::stack<void*> trans_stack;
 
 VARIABLE_LIST *global_variables;
 VARIABLE_LIST *local_variables;
-VARIABLE_LIST *parameter_variables;
+//VARIABLE_LIST *parameter_variables;
 INT_LIST *int_list;
 QUADRUPLE_LIST *all_quadruple;
 FUNCTION_LIST *function_list;
@@ -233,7 +233,10 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 		else if (sub_index == 4) {
 			DirectDeclarator *directDeclarator = new DirectDeclarator;
 
-			directDeclarator->variable_list = ((ParameterList*)trans_stack.top())->variable_list;
+			//previously, VARIABLE_LIST is used as parameter list,
+			//but later I realized that VARIABLE_LIST have no order,
+			//so, I created a new struct named PARAMETER_LINK to store parameter list.
+			directDeclarator->parameter_link = ((ParameterList*)trans_stack.top())->parameter_link;
 			delete (ParameterList*)trans_stack.top();
 			trans_stack.pop();
 
@@ -246,7 +249,7 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 		else if (sub_index == 6) {
 			DirectDeclarator *directDeclarator = new DirectDeclarator;
 
-			directDeclarator->variable_list = NULL;
+			directDeclarator->parameter_link = NULL;
 			directDeclarator->name = ((DirectDeclarator*)trans_stack.top())->name;
 			delete (DirectDeclarator*)trans_stack.top();
 			trans_stack.pop();
@@ -259,10 +262,13 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 	}
 	else if (i2n[L] == "declarator") {
 		if (sub_index == 1) {
+			//direct_declarator
+			//it's a common declarator, rather than a pointer
 			Declarator *declarator = new Declarator;
 			declarator->name = ((DirectDeclarator*)trans_stack.top())->name;
 			declarator->array_link = ((DirectDeclarator*)trans_stack.top())->array_link;
 			declarator->variable_list = ((DirectDeclarator*)trans_stack.top())->variable_list;
+			declarator->parameter_link = ((DirectDeclarator*)trans_stack.top())->parameter_link;
 			delete (DirectDeclarator*)trans_stack.top();
 			trans_stack.pop();
 			trans_stack.push((void*)declarator);
@@ -511,8 +517,10 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 	else if (i2n[L] == "parameter_list") {
 		if (sub_index == 0) {
 			ParameterList *parameterList = new ParameterList;
-			parameterList->variable_list = new VARIABLE_LIST;
-			parameterList->variable_list->insert(((ParameterDeclaration*)trans_stack.top())->name, ((ParameterDeclaration*)trans_stack.top())->var);
+			parameterList->parameter_link = new PARAMETER_LINK;
+			parameterList->parameter_link->name = ((ParameterDeclaration*)trans_stack.top())->name;
+			parameterList->parameter_link->var = ((ParameterDeclaration*)trans_stack.top())->var;
+			parameterList->parameter_link->next = NULL;
 			delete (ParameterDeclaration*)trans_stack.top();
 			trans_stack.pop();
 
@@ -520,23 +528,17 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 		}
 		else if (sub_index == 1) {
 			ParameterList *parameterList = new ParameterList;
+			parameterList->parameter_link = new PARAMETER_LINK;
 
-			std::string name;
-			VARIABLE var;
 			//insert current variable
-			name = ((ParameterDeclaration*)trans_stack.top())->name;
-			var = ((ParameterDeclaration*)trans_stack.top())->var;
-			//parameterList->variable_list.insert(((ParameterDeclaration*)trans_stack.top())->name, ((ParameterDeclaration*)trans_stack.top())->var);
+			parameterList->parameter_link->name = ((ParameterDeclaration*)trans_stack.top())->name;
+			parameterList->parameter_link->var = ((ParameterDeclaration*)trans_stack.top())->var;
 			delete (ParameterDeclaration*)trans_stack.top();
 			trans_stack.pop();
 
 			//insert elder variables
-			parameterList->variable_list = ((ParameterList*)trans_stack.top())->variable_list;
-			if (!parameterList->variable_list->insert(name, var)) {
-				printf("[Wrong] variable \"%s\" exists", name.c_str());
-				return 1;
-			}
-			
+			parameterList->parameter_link->next = ((ParameterList*)trans_stack.top())->parameter_link;			
+			//TODO check if variable name conflict
 			delete (ParameterList*)trans_stack.top();
 			trans_stack.pop();//delete old (temp) variable list
 
@@ -548,12 +550,12 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 	}
 	else if (i2n[L] == "parameter_type_list") {
 		if (sub_index == 0) {
-			ParameterTypeList *parameterTypeList = new ParameterTypeList{ ((ParameterList*)trans_stack.top())->variable_list };
+			ParameterTypeList *parameterTypeList = new ParameterTypeList{ ((ParameterList*)trans_stack.top())->parameter_link };
 			delete (ParameterList*)trans_stack.top();
 			trans_stack.pop();
 
 			trans_stack.push((void*)parameterTypeList);
-			parameter_variables = parameterTypeList->variable_list;
+			//parameter_variables = parameterTypeList->variable_list;
 		}
 		else {
 			UPEXPECTED_PRODUCTION
@@ -597,6 +599,8 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 	}
 	else if (i2n[L] == "function_definition") {
 		if (sub_index == 1) {
+			//declaration_specifiers declarator compound_statement
+
 			FunctionDefinition *functionDefinition = new FunctionDefinition;
 			
 			functionDefinition->func.quadruple_list = ((CompoundStatement*)trans_stack.top())->quadruple_list;
@@ -605,7 +609,7 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 			trans_stack.pop();
 			
 			functionDefinition->name = ((Declarator*)trans_stack.top())->name;
-			functionDefinition->func.parameter_variables = ((Declarator*)trans_stack.top())->variable_list;
+			functionDefinition->func.parameter_link = ((Declarator*)trans_stack.top())->parameter_link;
 			delete (Declarator*)trans_stack.top();
 			trans_stack.pop();
 
