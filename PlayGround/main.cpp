@@ -1,18 +1,26 @@
+#include<cstdlib>
 #include<iostream>
-int a[10][10];
-int f(int x) {
-	std::cout << x << std::endl;
-	return x;
-}
+#include<string>
 
 int main() {
-	int a;
-	scanf_s("%d", &a);
-	if (a > 100) {
-		printf("yes");
+	std::string a = "%d\n%dasdfasdfa\n";
+	std::string b = "chr$(";
+	int k;
+	k = a.find_first_of("\n");
+	bool more_than_one = false;
+	while (k >= 0) {
+		if (more_than_one) b += ", ";
+		else more_than_one = true;
+		b += "\"" + a.substr(0, k) + "\", 0AH, 0DH";
+		a = a.substr(k + 1, a.length() - k);
+		k = a.find_first_of("\n");
 	}
-	else {
-		printf("no");
+	if (a != "") {
+		if (more_than_one) b += ", ";
+		b += "\"" + a + "\"";
 	}
+	b += ")";
+	std::cout << b << std::endl;
+	system("pause");
 	return 0;
 }

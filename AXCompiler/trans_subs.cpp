@@ -6,14 +6,17 @@ VARIABLE_LIST *global_variables;
 VARIABLE_LIST *local_variables;
 //VARIABLE_LIST *parameter_variables;
 INT_LIST *int_list;
+STRING_LIST *string_list;
 QUADRUPLE_LIST *all_quadruple;
 FUNCTION_LIST *function_list;
+int now_func_num = 0;
 
 #define UPEXPECTED_PRODUCTION printf("[Wrong]\n\t %dth production of %s not defined\n", sub_index, i2n[L].c_str()); return 1;
 #define UNDEFINE_CASE printf("[Wrong]\n\t not defined case in %dth production of %s\n", sub_index, i2n[L].c_str()); return 1;
 
 void init_trans_subs() {
 	int_list = new INT_LIST;
+	string_list = new STRING_LIST;
 }
 
 VARIABLE_LIST *get_global_variables() {
@@ -21,6 +24,9 @@ VARIABLE_LIST *get_global_variables() {
 }
 INT_LIST *get_int_list() {
 	return int_list;
+}
+STRING_LIST *get_string_list() {
+	return string_list;
 }
 FUNCTION_LIST *get_function_list() {
 	return function_list;
@@ -76,6 +82,13 @@ void output_func_list() {
 	}
 }
 
+std::string now_func_index() {
+	return "FUNC" + std::to_string(now_func_num);
+}
+void update_func_index() {
+	now_func_num++;
+}
+
 std::string new_temp_variable(std::string type) {
 	if (local_variables == NULL) local_variables = new VARIABLE_LIST;
 	return local_variables->new_temp(type);
@@ -102,6 +115,27 @@ void new_const_int(const std::string num) {
 
 void new_const_int(int num) {
 	int_list->insert(std::pair<std::string, int>(std::to_string(num), num));
+}
+
+void new_const_string(const std::string st) {
+	std::string a = st.substr(1, st.length() - 2);
+	std::string b = "chr$(";
+	int k;
+	k = a.find_first_of("\\n");
+	bool more_than_one = false;
+	while (k >= 0) {
+		if (more_than_one) b += ", ";
+		else more_than_one = true;
+		b += "\"" + a.substr(0, k) + "\", 0AH, 0DH";
+		a = a.substr(k + 2, a.length() - k);
+		k = a.find_first_of("\\n");
+	}
+	if (a != "") {
+		if (more_than_one) b += ", ";
+		b += "\"" + a + "\"";
+	}
+	b += ")";
+	string_list->insert(std::pair<std::string, std::string>(st, b));
 }
 
 QUADRUPLE new_quadruple(std::string arg1, std::string op, std::string arg2) {
@@ -171,6 +205,10 @@ int trans_add(TOKEN* token, int2name& i2n) {
 	else if (i2n[token->code] == "CONSTANT") {
 		new_const_int(*(std::string*)token->p);
 		trans_stack.push((void*)new Constant{ *(std::string*)token->p });
+	}
+	else if (i2n[token->code] == "STRING_LITERAL") {
+		new_const_string(*(std::string*)token->p);
+		trans_stack.push((void*)new StringLiteral{ *(std::string*)token->p });
 	}
 	else {
 		//printf("[Wrong] Unexpected TOKEN: %s", i2n[token->code]);
@@ -606,7 +644,7 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 
 			FunctionDefinition *functionDefinition = new FunctionDefinition;
 			
-			functionDefinition->func.quadruple_list = ((CompoundStatement*)trans_stack.top())->quadruple_list;
+			QUADRUPLE_LIST *quadruple_list = ((CompoundStatement*)trans_stack.top())->quadruple_list;
 			functionDefinition->func.local_variable_list = ((CompoundStatement*)trans_stack.top())->variable_list;
 			delete (CompoundStatement*)trans_stack.top();
 			trans_stack.pop();
@@ -620,6 +658,9 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 			delete (DeclarationSpecifiers*)trans_stack.top();
 			trans_stack.pop();
 			
+			functionDefinition->func.quadruple_list = new_quadruple_list(quadruple_list, NULL, new_quadruple("", "", "", now_func_index() + "END"));
+			update_func_index();
+
 			trans_stack.push((void*)functionDefinition);
 			local_variables = NULL;
 		}
@@ -1032,6 +1073,7 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 	}
 	else if (i2n[L] == "primary_expression") {
 		if (sub_index == 0) {
+			//IDENTIFIER
 			PrimaryExpression *primaryExpression = new PrimaryExpression;
 			primaryExpression->vari_or_cons_name = ((Constant*)trans_stack.top())->name;
 			delete (Identifier*)trans_stack.top();
@@ -1039,9 +1081,18 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 			trans_stack.push((void*)primaryExpression);
 		}
 		else if (sub_index == 1) {
+			//CONSTANT
 			PrimaryExpression *primaryExpression = new PrimaryExpression;
 			primaryExpression->vari_or_cons_name = ((Constant*)trans_stack.top())->name;
 			delete (Constant*)trans_stack.top();
+			trans_stack.pop();
+			trans_stack.push((void*)primaryExpression);
+		}
+		else if (sub_index == 2) {
+			//STRING_LITERAL
+			PrimaryExpression *primaryExpression = new PrimaryExpression;
+			primaryExpression->vari_or_cons_name = ((StringLiteral*)trans_stack.top())->name;
+			delete (StringLiteral*)trans_stack.top();
 			trans_stack.pop();
 			trans_stack.push((void*)primaryExpression);
 		}
@@ -1115,6 +1166,14 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 			Statement *statement = new Statement;
 			statement->quadruple_list = ((IterationStatement*)trans_stack.top())->quadruple_list;
 			delete (IterationStatement*)trans_stack.top();
+			trans_stack.pop();
+
+			trans_stack.push((void*)statement);
+		}
+		else if (sub_index == 5) {
+			Statement *statement = new Statement;
+			statement->quadruple_list = ((JumpStatement*)trans_stack.top())->quadruple_list;
+			delete (JumpStatement*)trans_stack.top();
 			trans_stack.pop();
 
 			trans_stack.push((void*)statement);
@@ -1285,16 +1344,24 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 			UPEXPECTED_PRODUCTION
 		}
 	}
-	/*
 	else if (i2n[L] == "jump_statement") {
 		if (sub_index == 4) {
+			//RETURN expression ';'
 			JumpStatement *jumpStatement = new JumpStatement;
+			QUADRUPLE_LIST *quadruple_list = ((Expression*)trans_stack.top())->quadruple_list;
+			std::string name = ((Expression*)trans_stack.top())->vari_or_cons_name;
+			delete (Expression*)trans_stack.top();
+			trans_stack.pop();
 
+			quadruple_list = new_quadruple_list(quadruple_list, NULL, new_quadruple("EAX", "MOV", name));
+			jumpStatement->quadruple_list = new_quadruple_list(quadruple_list, NULL, new_quadruple("", "JMP", now_func_index() + "END"));
+			
+			trans_stack.push((void*)jumpStatement);
 		}
 		else {
 			UPEXPECTED_PRODUCTION
 		}
-	}*/
+	}
 	else {
 		UPEXPECTED_PRODUCTION
 		//printf("[Wrong] productions of %s not defined\n", i2n[L]); return 1;

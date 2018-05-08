@@ -4,6 +4,7 @@
 #include <stack>
 #include <map>
 #include <list>
+#include <set>
 #include <iostream>
 #include <iomanip>
 
@@ -17,6 +18,7 @@
 //#define VARIABLE_LIST_MAP std::map<std::string, VARIABLE_LIST*>
 #define FUNCTION_LIST std::map<std::string, FUNCTION>
 #define INT_LIST std::map<std::string, int>
+#define STRING_LIST std::map<std::string, std::string>
 #define QUADRUPLE_LIST std::list<QUADRUPLE>
 
 struct ARRAY_LINK {
@@ -146,6 +148,10 @@ struct Identifier {
 };
 
 struct Constant {
+	std::string name;
+};
+
+struct StringLiteral {
 	std::string name;
 };
 
@@ -370,4 +376,5 @@ void output_func_list();
 
 VARIABLE_LIST *get_global_variables();
 INT_LIST *get_int_list();
+STRING_LIST *get_string_list();
 FUNCTION_LIST *get_function_list();

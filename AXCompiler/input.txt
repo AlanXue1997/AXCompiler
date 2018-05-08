@@ -1,13 +1,22 @@
-int f(int x, int b){
-	int a;
-	a = x;
+int a;
+int hanoi(int a, int b, int c, int n) {
+	if (1 < n) {
+		hanoi(a, c, b, n - 1);
+		printf("%d->%d\n", a, c);
+		hanoi(b, a, c, n - 1);
+	}
+	else {
+		printf("%d->%d\n", a, c);
+	}
 }
 int main() {
-	int a;
-	a = f(2,3);
+	hanoi(1, 2, 3, 2);
+	return 0;
 }
 
 /*
+	不支持指针;
+	不支持参数中存在数组;
 	不支持一句话声明多个变量；
 	不支持常量表达式；
 	不支持重载；

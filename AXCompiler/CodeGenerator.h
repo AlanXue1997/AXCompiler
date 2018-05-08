@@ -15,5 +15,5 @@ struct ASM_VARIABLE {
 
 
 
-void generate_code(VARIABLE_LIST* global_variable_list, INT_LIST* int_list, FUNCTION_LIST* function_list);
+void generate_code(VARIABLE_LIST* , INT_LIST* , STRING_LIST* , FUNCTION_LIST* );
 void init_code_generator();
