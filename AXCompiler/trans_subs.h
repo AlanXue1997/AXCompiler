@@ -364,6 +364,10 @@ struct ArgumentExpressionList {
 	PARAMETER_LINK* parameter_link;
 };
 
+struct UnaryOperator {
+	char ch;
+};
+
 void init_trans_subs();
 int trans_add(TOKEN* token, int2name& i2n);
 int trans_reduction(int L, int sub_index, int2name& i2n);

@@ -140,7 +140,8 @@ void inst1(std::string instructor, std::string source) {
 
 void modify_name(std::string &name) {
 	if (local_variable_list != NULL && local_variable_list->find(name) != NULL) {
-		name = "[EBP-" + std::to_string(asm_variable_list->at(name).offset) + "]";
+		//name = "[EBP-" + std::to_string(asm_variable_list->at(name).offset) + "]";
+		name = "l_" + name;
 	}
 	//It is not a local variable, thus if it is in asm_variable_list, it must be a parameter
 	//(I just don't want to search in a linked list :)
@@ -158,16 +159,23 @@ void modify_name(std::string &name) {
 		int k = name.find_first_of('%');
 		std::string base = name.substr(0, k);
 		std::string index = name.substr(k + 1, name.length() - k - 1);
-		if (global_variable_list != NULL && global_variable_list->find(base) != NULL) {
-			base = "g_" + base;
-			inst2("MOV", "EBX", "OFFSET " + base);
+		if (local_variable_list != NULL && local_variable_list->find(base) != NULL) {
+			//inst2("MOV", "EBX", "EBP");
+			//inst2("SUB", "EBX", std::to_string(asm_variable_list->at(base).offset));
+			//inst2("SUB", "EBX", "OFFSET l_" + base);
+			base = "l_" + base;
 		}
-		else if (local_variable_list != NULL && local_variable_list->find(base) != NULL) {
-			inst2("MOV", "EBX", "EBP");
-			inst2("SUB", "EBX", std::to_string(asm_variable_list->at(base).offset));
+		else if (global_variable_list != NULL && global_variable_list->find(base) != NULL) {
+			base = "g_" + base;
+			//inst2("MOV", "EBX", "OFFSET " + base);
 		}
 		inst2("MOV", "ESI", index);
-		name = "[EBX+ESI*4]";
+		name = base + "[ESI*4]";
+	}
+	else if (name[0] == '&') {
+		std::string a = name.substr(1, name.length() - 1);
+		modify_name(a);
+		name = "ADDR " + a;
 	}
 }
 
@@ -242,6 +250,34 @@ void writeInstructor(QUADRUPLE *quadruple) {
 	}
 }
 
+void writeLocal(VARIABLE_LIST *list) {
+	if (list == NULL)return;
+	auto dict = list->get_dict();
+	for (auto it = dict->cbegin(); it != dict->cend(); ++it) {
+		std::string type = it->second.type;
+		if (type == "int") {
+			fout << "\t";
+			fout << TAB(INSTRUCTOR_WIDTH) << "LOCAL";
+			fout << "l_" << it->first;
+			if (it->second.array) {
+				int sum = 1;
+				auto p = (ARRAY_LINK*)it->second.pointer;
+				while (p != NULL) {
+					sum *= const_int_list->at(p->vari_or_cons_name);
+					p = p->next;
+				}
+				fout << "[" << sum << "]";
+			}
+			fout << " : SDWORD";
+			
+			fout << std::endl;
+		}
+		else {
+			fout << "(!)Unsupported local variable type: " << type;
+		}
+	}
+}
+
 void writeProc() {
 	fout << ".CODE" << std::endl;
 	for (auto it = func_list->cbegin(); it != func_list->cend(); ++it) {
@@ -258,7 +294,7 @@ void writeProc() {
 		std::string return_type = it->second.var.type;
 		QUADRUPLE_LIST *quadruple_list = it->second.quadruple_list;
 		//fout << "(!)Undefined Function name type" << std::endl;
-		fout << name << " PROC C USES EBX " << std::endl;
+		fout << name << " PROC C USES EBX, " << std::endl;
 		PARAMETER_LINK *p = it->second.parameter_link;
 		//used to write "," between parameters
 		CALL_STACK call_stack;
@@ -290,23 +326,26 @@ void writeProc() {
 		fout << std::endl;
 
 		asm_variable_list = convertVariable(local_variable_list, local_parameter_link);
+		/*
 		if (asm_variable_list->at("@ALL").offset > 0) {
 			fout << "\t";
 			fout << TAB(INSTRUCTOR_WIDTH) << "SUB";
 			fout << TAB(INSTRUCTOR_WIDTH) << "ESP,";
 			fout << TAB(INSTRUCTOR_WIDTH) << asm_variable_list->at("@ALL").offset;
 			fout << std::endl;
-		}
+		}*/
+		writeLocal(local_variable_list);
 		for (auto quadruple = quadruple_list->begin(); quadruple != quadruple_list->end(); ++quadruple) {
 			writeInstructor(&*quadruple);//Magical converting...
 		}
+		/*
 		if (asm_variable_list->at("@ALL").offset > 0) {
 			fout << "\t";
 			fout << TAB(INSTRUCTOR_WIDTH) << "ADD";
 			fout << TAB(INSTRUCTOR_WIDTH) << "ESP,";
 			fout << TAB(INSTRUCTOR_WIDTH) << asm_variable_list->at("@ALL").offset;
 			fout << std::endl;
-		}
+		}*/
 		fout << "\tRET" << std::endl;
 		fout << name << " ENDP" << std::endl;
 		fout << std::endl;

@@ -1001,6 +1001,21 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 
 			//output_quadruple(unaryExpression->quadruple_list);
 		}
+		else if (sub_index == 3) {
+			// unary_operator cast_expression
+			UnaryExpression *unaryExpression = new UnaryExpression;
+
+			unaryExpression->quadruple_list = ((CastExpression*)trans_stack.top())->quadruple_list;
+			std::string vari_or_cons_name = ((CastExpression*)trans_stack.top())->vari_or_cons_name;
+			delete (CastExpression*)trans_stack.top();
+			trans_stack.pop();
+
+			unaryExpression->vari_or_cons_name = ((UnaryOperator*)trans_stack.top())->ch + vari_or_cons_name;
+			delete (UnaryOperator*)trans_stack.top();
+			trans_stack.pop();
+
+			trans_stack.push((void*)unaryExpression);
+		}
 		else {
 			UPEXPECTED_PRODUCTION
 		}
@@ -1357,6 +1372,16 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 			jumpStatement->quadruple_list = new_quadruple_list(quadruple_list, NULL, new_quadruple("", "JMP", now_func_index() + "END"));
 			
 			trans_stack.push((void*)jumpStatement);
+		}
+		else {
+			UPEXPECTED_PRODUCTION
+		}
+	}
+	else if (i2n[L] == "unary_operator") {
+		if (sub_index == 0) {
+			// '&'
+			UnaryOperator *unaryOperator = new UnaryOperator{ '&' };
+			trans_stack.push((void*)unaryOperator);
 		}
 		else {
 			UPEXPECTED_PRODUCTION
