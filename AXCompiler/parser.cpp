@@ -103,9 +103,14 @@ int parse(TOKEN* t) {
 			}
 		}
 #ifdef DO_TRANS
-		if (trans_reduction(p.L, p.sub_index, i2n) == 1) {
+		int ret = trans_reduction(p.L, p.sub_index, i2n);
+		if (ret == 1) {
 			return ACC;//translator encounted unexpected production
 		}
+		else if (ret == 2) {
+			return WRONG;
+		}
+		
 #endif
 #ifdef LOG_PRODUCTION
 		std::cout << i2n[p.L] << " -> ";

@@ -223,6 +223,17 @@ void writeInstructor(QUADRUPLE *quadruple) {
 		inst2("MOV", quadruple->result, "EAX");
 		writeLabel(label);
 	}
+	else if (quadruple->op == ">") {
+		inst2("MOV", "EAX", "1");
+		inst2("MOV", quadruple->result, "EAX");
+		inst2("MOV", "EAX", quadruple->arg1);
+		inst2("CMP", "EAX", quadruple->arg2);
+		std::string label = new_common_label();
+		inst1("JG", label);
+		inst2("MOV", "EAX", "0");
+		inst2("MOV", quadruple->result, "EAX");
+		writeLabel(label);
+	}
 	else if (quadruple->op == "MOV") {
 		inst2("MOV", quadruple->arg1, quadruple->arg2);
 	}
@@ -278,8 +289,48 @@ void writeLocal(VARIABLE_LIST *list) {
 	}
 }
 
+void writeParameter(PARAMETER_LINK *p) {
+	CALL_STACK call_stack;
+	while (p != NULL) {
+		if (p->var.array) {
+			fout << "(!)Not support array in parameters ";
+		}
+		else {
+			if (p->var.type == "int") {
+				call_stack.push("para_" + (p->name) + ":SDWORD");
+			}
+			else {
+				fout << "(!)Unsupported type: " << p->var.type << "in parameters ";
+			}
+		}
+		p = p->next;
+	}
+	bool more_than_one = false;
+	while (!call_stack.empty()) {
+		if (more_than_one) {
+			fout << "," << std::endl;
+		}
+		else {
+			more_than_one = true;
+		}
+		fout << "\t" << call_stack.top();
+		call_stack.pop();
+	}
+}
+
 void writeProc() {
 	fout << ".CODE" << std::endl;
+	for (auto it = func_list->cbegin(); it != func_list->cend(); ++it) {
+		std::string name = it->first;
+		if (name == "main") {
+			name = "_main";
+		}
+		fout << name << " PROTO C ";
+		writeParameter(it->second.parameter_link);
+		fout << std::endl;
+	}
+	fout << std::endl;
+
 	for (auto it = func_list->cbegin(); it != func_list->cend(); ++it) {
 		std::string name = it->first;
 
@@ -287,42 +338,13 @@ void writeProc() {
 			name = "_main";
 		}
 
-		//!!cannot get local variable correctly
 		local_variable_list = it->second.local_variable_list;
 		local_parameter_link = it->second.parameter_link;
-		//it->second.parameter_variables
 		std::string return_type = it->second.var.type;
 		QUADRUPLE_LIST *quadruple_list = it->second.quadruple_list;
 		//fout << "(!)Undefined Function name type" << std::endl;
 		fout << name << " PROC C USES EBX, " << std::endl;
-		PARAMETER_LINK *p = it->second.parameter_link;
-		//used to write "," between parameters
-		CALL_STACK call_stack;
-		while (p != NULL) {
-			if (p->var.array) {
-				fout << "(!)Not support array in parameters ";
-			}
-			else {
-				if (p->var.type == "int") {
-					call_stack.push("para_" + (p->name) + ":SDWORD");
-				}
-				else {
-					fout << "(!)Unsupported type: " << p->var.type << "in parameters ";
-				}
-			}
-			p = p->next;
-		}
-		bool more_than_one = false;
-		while (!call_stack.empty()) {
-			if (more_than_one) {
-				fout << ","<<std::endl;
-			}
-			else {
-				more_than_one = true;
-			}
-			fout << "\t" << call_stack.top();
-			call_stack.pop();
-		}
+		writeParameter(it->second.parameter_link);
 		fout << std::endl;
 
 		asm_variable_list = convertVariable(local_variable_list, local_parameter_link);

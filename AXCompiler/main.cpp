@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
 		outputWord(words);
 		printf("\n");
 		k = parse(words);
-	} while (words->code!=END && k!=NONE && k != ACC);
+	} while (words->code != END && k != NONE && k != ACC&&k != WRONG);
 	if (words->code == END || k==ACC)printf("ACCEPTED!!!\n");
 	else printf("ERROR");
 	
@@ -35,7 +35,7 @@ int main(int argc, char* argv[]) {
 	//output_int_list();
 	//output_func_list();
 
-	generate_code(get_global_variables(), get_int_list(), get_string_list(), get_function_list());
+	if (k == ACC)generate_code(get_global_variables(), get_int_list(), get_string_list(), get_function_list());
 	system("pause");
 	return 0;
 }

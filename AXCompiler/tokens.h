@@ -11,3 +11,5 @@
 #define N_TYPE 5
 
 #define N_TOTAL 170
+
+#define WRONG -1

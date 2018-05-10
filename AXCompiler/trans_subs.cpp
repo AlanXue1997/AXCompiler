@@ -11,8 +11,8 @@ QUADRUPLE_LIST *all_quadruple;
 FUNCTION_LIST *function_list;
 int now_func_num = 0;
 
-#define UPEXPECTED_PRODUCTION printf("[Wrong]\n\t %dth production of %s not defined\n", sub_index, i2n[L].c_str()); return 1;
-#define UNDEFINE_CASE printf("[Wrong]\n\t not defined case in %dth production of %s\n", sub_index, i2n[L].c_str()); return 1;
+#define UPEXPECTED_PRODUCTION printf("[Wrong]\n\t %dth production of %s not defined\n", sub_index, i2n[L].c_str()); return 2;
+#define UNDEFINE_CASE printf("[Wrong]\n\t not defined case in %dth production of %s\n", sub_index, i2n[L].c_str()); return 2;
 
 void init_trans_subs() {
 	int_list = new INT_LIST;
@@ -107,6 +107,11 @@ std::string new_if_mark() {
 std::string new_for_mark() {
 	static int n = 0;
 	return "FOR" + std::to_string(n++);
+}
+
+std::string new_while_mark() {
+	static int n = 0;
+	return "WH" + std::to_string(n++);
 }
 
 void new_const_int(const std::string num) {
@@ -616,6 +621,7 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 		else if (sub_index == 2) {
 			CompoundStatement *compoundStatement = new CompoundStatement;
 			compoundStatement->variable_list = ((DeclarationList*)trans_stack.top())->variable_list;
+			compoundStatement->quadruple_list = NULL;
 			delete (DeclarationList*)trans_stack.top();
 			trans_stack.pop();
 
@@ -1048,6 +1054,28 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 			
 			trans_stack.push((void*)postfixExpression);
 		}
+		else if (sub_index == 2) {
+			// postfix_expression '(' ')'
+			PostfixExpression *postfixExpression = new PostfixExpression;
+
+			QUADRUPLE_LIST *quadruple_list = ((PostfixExpression*)trans_stack.top())->quadruple_list;
+			std::string func_name = ((PostfixExpression*)trans_stack.top())->vari_or_cons_name;
+			delete (PostfixExpression*)trans_stack.top();
+			trans_stack.pop();
+
+			quadruple_list = new_quadruple_list(quadruple_list, NULL, new_quadruple(func_name, "INVOKE", ""));
+			//Actually, you should get the return type in func_list
+			//I will do it later
+			std::string return_value = new_temp_variable("int");
+			//Maybe delivering EAX directly also works
+			quadruple_list = new_quadruple_list(quadruple_list, NULL, new_quadruple(return_value, "MOV", "EAX"));
+			postfixExpression->quadruple_list = quadruple_list;
+			//Not sure if it is useful, just for safety(Lazy)
+			postfixExpression->array_link = NULL;
+			postfixExpression->vari_or_cons_name = return_value;
+
+			trans_stack.push((void*)postfixExpression);
+		}
 		else if (sub_index == 3) {
 			//postfix_expression '(' argument_expression_list ')'
 			PostfixExpression *postfixExpression = new PostfixExpression;
@@ -1287,7 +1315,32 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 		}
 	}
 	else if(i2n[L] == "iteration_statement"){
-		if (sub_index == 3) {
+		if (sub_index == 0) {
+			// WHILE '(' expression ')' statement
+			IterationStatement *iterationStatement = new IterationStatement;
+			QUADRUPLE_LIST *quadruple_list_2 = ((Statement*)trans_stack.top())->quadruple_list;
+			delete (Statement*)trans_stack.top();
+			trans_stack.pop();
+
+			QUADRUPLE_LIST *quadruple_list_1 = ((Expression*)trans_stack.top())->quadruple_list;
+			std::string vari_or_cons_name = ((Expression*)trans_stack.top())->vari_or_cons_name;
+			delete (Expression*)trans_stack.top();
+			trans_stack.pop();
+
+			std::string mark = new_while_mark();
+			std::string mark_begin = mark + "BEGIN";
+			std::string mark_continue = mark_begin;
+			std::string mark_end = mark + "END";
+			QUADRUPLE_LIST *quadruple_list_0 = new_quadruple_list(NULL, NULL, new_quadruple("", "", "", mark_begin));
+			quadruple_list_1 = new_quadruple_list(quadruple_list_0, quadruple_list_1, new_quadruple(vari_or_cons_name, "JZ", mark_end));
+			quadruple_list_2 = new_quadruple_list(quadruple_list_1, quadruple_list_2, new_quadruple(vari_or_cons_name, "JMP", mark_begin));
+			
+			iterationStatement->quadruple_list = new_quadruple_list(quadruple_list_2, NULL, new_quadruple("", "", "", mark_end));
+
+			trans_stack.push((void*)iterationStatement);
+		}
+		else if (sub_index == 3) {
+			//FOR '(' expression_statement expression_statement expression ')' statement
 			IterationStatement *iterationStatement = new IterationStatement;
 			
 			QUADRUPLE_LIST *quadruple_list_4 = ((Statement*)trans_stack.top())->quadruple_list;
