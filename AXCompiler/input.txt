@@ -1,9 +1,17 @@
 int main(){
-	 int i;
-	 i=0;
-	 while(10>i){
-		printf("%d ", i=i+1);
-	 }
+	int k;
+	int shuzu[20];
+	int sum;
+	int a;
+	for(k=0;k<10;k=k+1){
+		scanf("%d", &a);
+		shuzu[k] = a;
+	}
+	sum = 0;
+	for(k=0;k<10;k=k+1){
+		sum = sum + shuzu[k];
+	}
+	printf("%d\n", sum/10);
 	 return 0;
 }
 

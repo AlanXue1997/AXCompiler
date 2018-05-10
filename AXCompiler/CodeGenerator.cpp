@@ -196,7 +196,7 @@ void writeInstructor(QUADRUPLE *quadruple) {
 	}
 	else if (quadruple->op == "=") {
 		inst2("MOV", "EAX", quadruple->arg1);
-		inst2("MOV", quadruple->result, "EAX");
+		inst2("MOV", quadruple->arg2, "EAX");
 	}
 	else if (quadruple->op == "*") {
 		inst2("MOV", "EAX", quadruple->arg1);
@@ -208,6 +208,11 @@ void writeInstructor(QUADRUPLE *quadruple) {
 		inst2("MOV", "EAX", quadruple->arg1);
 		inst2("CMP", "EAX", "0");
 		inst1("JZ", quadruple->arg2);
+	}
+	else if (quadruple->op == "JNZ") {
+		inst2("MOV", "EAX", quadruple->arg1);
+		inst2("CMP", "EAX", "0");
+		inst1("JNZ", quadruple->arg2);
 	}
 	else if (quadruple->op == "JMP") {
 		inst1("JMP", quadruple->arg2);
@@ -223,6 +228,17 @@ void writeInstructor(QUADRUPLE *quadruple) {
 		inst2("MOV", quadruple->result, "EAX");
 		writeLabel(label);
 	}
+	else if (quadruple->op == "<=") {
+		inst2("MOV", "EAX", "1");
+		inst2("MOV", quadruple->result, "EAX");
+		inst2("MOV", "EAX", quadruple->arg1);
+		inst2("CMP", "EAX", quadruple->arg2);
+		std::string label = new_common_label();
+		inst1("JNG", label);
+		inst2("MOV", "EAX", "0");
+		inst2("MOV", quadruple->result, "EAX");
+		writeLabel(label);
+	}
 	else if (quadruple->op == ">") {
 		inst2("MOV", "EAX", "1");
 		inst2("MOV", quadruple->result, "EAX");
@@ -230,6 +246,39 @@ void writeInstructor(QUADRUPLE *quadruple) {
 		inst2("CMP", "EAX", quadruple->arg2);
 		std::string label = new_common_label();
 		inst1("JG", label);
+		inst2("MOV", "EAX", "0");
+		inst2("MOV", quadruple->result, "EAX");
+		writeLabel(label);
+	}
+	else if (quadruple->op == ">=") {
+		inst2("MOV", "EAX", "1");
+		inst2("MOV", quadruple->result, "EAX");
+		inst2("MOV", "EAX", quadruple->arg1);
+		inst2("CMP", "EAX", quadruple->arg2);
+		std::string label = new_common_label();
+		inst1("JNL", label);
+		inst2("MOV", "EAX", "0");
+		inst2("MOV", quadruple->result, "EAX");
+		writeLabel(label);
+	}
+	else if (quadruple->op == "==") {
+		inst2("MOV", "EAX", "1");
+		inst2("MOV", quadruple->result, "EAX");
+		inst2("MOV", "EAX", quadruple->arg1);
+		inst2("XOR", "EAX", quadruple->arg2);
+		std::string label = new_common_label();
+		inst1("JZ", label);
+		inst2("MOV", "EAX", "0");
+		inst2("MOV", quadruple->result, "EAX");
+		writeLabel(label);
+	}
+	else if (quadruple->op == "!=") {
+		inst2("MOV", "EAX", "1");
+		inst2("MOV", quadruple->result, "EAX");
+		inst2("MOV", "EAX", quadruple->arg1);
+		inst2("XOR", "EAX", quadruple->arg2);
+		std::string label = new_common_label();
+		inst1("JNZ", label);
 		inst2("MOV", "EAX", "0");
 		inst2("MOV", quadruple->result, "EAX");
 		writeLabel(label);

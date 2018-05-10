@@ -114,6 +114,16 @@ std::string new_while_mark() {
 	return "WH" + std::to_string(n++);
 }
 
+std::string new_or_mark() {
+	static int n = 0;
+	return "OR" + std::to_string(n++);
+}
+
+std::string new_and_mark() {
+	static int n = 0;
+	return "AND" + std::to_string(n++);
+}
+
 void new_const_int(const std::string num) {
 	int_list->insert(std::pair<std::string, int>(num, atoi(num.c_str())));
 }
@@ -131,7 +141,12 @@ void new_const_string(const std::string st) {
 	while (k >= 0) {
 		if (more_than_one) b += ", ";
 		else more_than_one = true;
-		b += "\"" + a.substr(0, k) + "\", 0AH, 0DH";
+		if (k > 0) {
+			b += "\"" + a.substr(0, k) + "\", 0AH, 0DH";
+		}
+		else {
+			b += "0AH, 0DH";
+		}
 		a = a.substr(k + 2, a.length() - k);
 		k = a.find_first_of("\\n");
 	}
@@ -684,12 +699,13 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 			trans_stack.push((void*)assignmentExpression);
 		}
 		else if (sub_index == 1) {
+			//unary_expression assignment_operator assignment_expression
 			AssignmentExpression *assignmentExpression = new AssignmentExpression;
 			
 			QUADRUPLE_LIST* quadruple_list_r = ((AssignmentExpression*)trans_stack.top())->quadruple_list;
 			QUADRUPLE quadruple;
 			quadruple.arg1 = ((AssignmentExpression*)trans_stack.top())->vari_or_cons_name;
-			quadruple.arg2 = "";
+			//quadruple.arg2 = "";
 			delete (AssignmentExpression*)trans_stack.top();
 			trans_stack.pop();
 
@@ -698,7 +714,8 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 			trans_stack.pop();
 
 			QUADRUPLE_LIST* quadruple_list_l = ((UnaryExpression*)trans_stack.top())->quadruple_list;
-			quadruple.result = ((UnaryExpression*)trans_stack.top())->vari_or_cons_name;
+			quadruple.result = ""; ((UnaryExpression*)trans_stack.top())->vari_or_cons_name;
+			quadruple.arg2 = ((UnaryExpression*)trans_stack.top())->vari_or_cons_name;
 			delete (UnaryExpression*)trans_stack.top();
 			trans_stack.pop();
 			
@@ -735,6 +752,39 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 			trans_stack.pop();
 			trans_stack.push((void*)logicalOrExpression);
 		}
+		else if (sub_index == 1) {
+			//logical_or_expression OR_OP logical_and_expression
+			LogicalOrExpression *logicalOrExpression = new LogicalOrExpression;
+			std::string temp_variable_name = new_temp_variable("int");
+
+			std::string vari_or_cons_name_r = ((LogicalAndExpression*)trans_stack.top())->vari_or_cons_name;
+			QUADRUPLE_LIST *quadruple_list_r = ((LogicalAndExpression*)trans_stack.top())->quadruple_list;
+			delete (LogicalAndExpression*)trans_stack.top();
+			trans_stack.pop();
+
+			std::string vari_or_cons_name_l = ((LogicalOrExpression*)trans_stack.top())->vari_or_cons_name;
+			QUADRUPLE_LIST *quadruple_list_l = ((LogicalOrExpression*)trans_stack.top())->quadruple_list;
+			delete (LogicalOrExpression*)trans_stack.top();
+			trans_stack.pop();
+			
+			std::string mark = new_or_mark();
+			std::string mark_end = mark + "END";
+			std::string mark_true = mark + "TRUE";
+			std::string mark_false = mark + "FALSE";
+			quadruple_list_l = new_quadruple_list(quadruple_list_l, NULL, new_quadruple(vari_or_cons_name_l, "JNZ", mark_true));
+			quadruple_list_r = new_quadruple_list(quadruple_list_l, quadruple_list_r, new_quadruple(vari_or_cons_name_r, "JZ", mark_false));
+			quadruple_list_r = new_quadruple_list(quadruple_list_r, NULL, new_quadruple("", "", "", mark_true));
+			quadruple_list_r = new_quadruple_list(quadruple_list_r, NULL, new_quadruple("1", "=", temp_variable_name));
+			quadruple_list_r = new_quadruple_list(quadruple_list_r, NULL, new_quadruple("", "JMP", mark_end));
+			quadruple_list_r = new_quadruple_list(quadruple_list_r, NULL, new_quadruple("", "", "", mark_false));
+			quadruple_list_r = new_quadruple_list(quadruple_list_r, NULL, new_quadruple("0", "=", temp_variable_name));
+			quadruple_list_r = new_quadruple_list(quadruple_list_r, NULL, new_quadruple("", "", "", mark_end));
+
+			logicalOrExpression->quadruple_list = quadruple_list_r;
+			logicalOrExpression->vari_or_cons_name = temp_variable_name;
+			
+			trans_stack.push((void*)logicalOrExpression);
+		}
 		else {
 			UPEXPECTED_PRODUCTION
 		}
@@ -746,6 +796,39 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 			logicalAndExpression->quadruple_list = ((InclusiveOrExpression*)trans_stack.top())->quadruple_list;
 			delete (InclusiveOrExpression*)trans_stack.top();
 			trans_stack.pop();
+			trans_stack.push((void*)logicalAndExpression);
+		}
+		else if (sub_index == 1) {
+			// logical_and_expression AND_OP inclusive_or_expression
+			LogicalAndExpression *logicalAndExpression = new LogicalAndExpression;
+			std::string temp_variable_name = new_temp_variable("int");
+
+			std::string vari_or_cons_name_r = ((InclusiveOrExpression*)trans_stack.top())->vari_or_cons_name;
+			QUADRUPLE_LIST *quadruple_list_r = ((InclusiveOrExpression*)trans_stack.top())->quadruple_list;
+			delete (InclusiveOrExpression*)trans_stack.top();
+			trans_stack.pop();
+
+			std::string vari_or_cons_name_l = ((LogicalAndExpression*)trans_stack.top())->vari_or_cons_name;
+			QUADRUPLE_LIST *quadruple_list_l = ((LogicalAndExpression*)trans_stack.top())->quadruple_list;
+			delete (LogicalAndExpression*)trans_stack.top();
+			trans_stack.pop();
+
+			std::string mark = new_and_mark();
+			std::string mark_end = mark + "END";
+			std::string mark_true = mark + "TRUE";
+			std::string mark_false = mark + "FALSE";
+			quadruple_list_l = new_quadruple_list(quadruple_list_l, NULL, new_quadruple(vari_or_cons_name_l, "JZ", mark_false));
+			quadruple_list_r = new_quadruple_list(quadruple_list_l, quadruple_list_r, new_quadruple(vari_or_cons_name_r, "JNZ", mark_true));
+			quadruple_list_r = new_quadruple_list(quadruple_list_r, NULL, new_quadruple("", "", "", mark_false));
+			quadruple_list_r = new_quadruple_list(quadruple_list_r, NULL, new_quadruple("0", "=", temp_variable_name));
+			quadruple_list_r = new_quadruple_list(quadruple_list_r, NULL, new_quadruple("", "JMP", mark_end));
+			quadruple_list_r = new_quadruple_list(quadruple_list_r, NULL, new_quadruple("", "", "", mark_true));
+			quadruple_list_r = new_quadruple_list(quadruple_list_r, NULL, new_quadruple("1", "=", temp_variable_name));
+			quadruple_list_r = new_quadruple_list(quadruple_list_r, NULL, new_quadruple("", "", "", mark_end));
+
+			logicalAndExpression->quadruple_list = quadruple_list_r;
+			logicalAndExpression->vari_or_cons_name = temp_variable_name;
+
 			trans_stack.push((void*)logicalAndExpression);
 		}
 		else {
@@ -798,6 +881,36 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 			equalityExpression->quadruple_list = ((RelationalExpression*)trans_stack.top())->quadruple_list;
 			delete (RelationalExpression*)trans_stack.top();
 			trans_stack.pop();
+			trans_stack.push((void*)equalityExpression);
+		}
+		else if (sub_index == 1 || sub_index == 2) {
+			// equality_expression EQ_OP relational_expression
+			// equality_expression NE_OP relational_expression
+			EqualityExpression *equalityExpression = new EqualityExpression;
+			QUADRUPLE_LIST *quadruple_list_r = ((RelationalExpression*)trans_stack.top())->quadruple_list;
+
+			//QUADRUPLE quadruple;
+			std::string op;
+			if (sub_index == 1) {
+				op = "==";
+			}
+			else {
+				op = "!=";
+			}
+			std::string arg2 = ((RelationalExpression*)trans_stack.top())->vari_or_cons_name;
+			delete (RelationalExpression*)trans_stack.top();
+			trans_stack.pop();
+
+			QUADRUPLE_LIST *quadruple_list_l = ((EqualityExpression*)trans_stack.top())->quadruple_list;
+			std::string arg1 = ((EqualityExpression*)trans_stack.top())->vari_or_cons_name;
+			if (local_variables == NULL)local_variables = new VARIABLE_LIST;
+			QUADRUPLE quadruple = new_quadruple_with_result(arg1, op, arg2);
+			equalityExpression->vari_or_cons_name = quadruple.result;
+			delete (EqualityExpression*)trans_stack.top();
+			trans_stack.pop();
+
+			equalityExpression->quadruple_list = new_quadruple_list(quadruple_list_l, quadruple_list_r, quadruple);
+
 			trans_stack.push((void*)equalityExpression);
 		}
 		else {
@@ -1136,6 +1249,15 @@ int trans_reduction(int L, int sub_index, int2name& i2n) {
 			PrimaryExpression *primaryExpression = new PrimaryExpression;
 			primaryExpression->vari_or_cons_name = ((StringLiteral*)trans_stack.top())->name;
 			delete (StringLiteral*)trans_stack.top();
+			trans_stack.pop();
+			trans_stack.push((void*)primaryExpression);
+		}
+		else if (sub_index == 3) {
+			// '(' expression ')'
+			PrimaryExpression *primaryExpression = new PrimaryExpression;
+			primaryExpression->quadruple_list = ((Expression*)trans_stack.top())->quadruple_list;
+			primaryExpression->vari_or_cons_name = ((Expression*)trans_stack.top())->vari_or_cons_name;
+			delete (Expression*)trans_stack.top();
 			trans_stack.pop();
 			trans_stack.push((void*)primaryExpression);
 		}

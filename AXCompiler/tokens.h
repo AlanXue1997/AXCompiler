@@ -12,4 +12,4 @@
 
 #define N_TOTAL 170
 
-#define WRONG -1
+#define WRONG -2
